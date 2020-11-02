@@ -17,12 +17,12 @@ import multiprocessing
 from progress.bar import Bar
 import random
 from scipy import signal
-
+import multiprocessing
+from joblib import Parallel, delayed
 
 class getStripe:
-    def __init__(self, unbalLib, balLib, resol, minH, maxW, canny, chromnames, chromsizes, core):
+    def __init__(self, unbalLib, resol, minH, maxW, canny, chromnames, chromsizes, core):
         self.unbalLib = unbalLib
-        self.balLib = balLib
         self.resol = resol
         self.minH = minH
         self.maxW = maxW
@@ -31,13 +31,12 @@ class getStripe:
         self.chromsizes = chromsizes
         self.core = core
 
-    @jit(nopython=True)
     def nulldist(self):
         t_background_start = time.time()
 
-        tableft = [[0 for j in range(1000)] for i in range(400)]
-        tabcenter = [[0 for j in range(1000)] for i in range(400)]
-        tabright = [[0 for j in range(1000)] for i in range(400)]
+        #tableft = [[0 for j in range(1000)] for i in range(400)]
+        #tabcenter = [[0 for j in range(1000)] for i in range(400)]
+        #tabright = [[0 for j in range(1000)] for i in range(400)]
 
         samplesize = (self.chromsizes / np.sum(self.chromsizes)) * 1000
         samplesize = np.uint8(samplesize)
@@ -45,8 +44,62 @@ class getStripe:
         notzero = np.where(samplesize != 0)
         chromnames2 = [self.chromnames[i] for i in notzero[0]]
         samplesize[0] += dif
-        c = 0
 
+        def main_null_calc(chr):
+            #c = np.where(chromnames2 == chr)[0]
+            c = chromnames2.index(chr)
+            mat = self.unbalLib.fetch(chr)
+            mat = nantozero(mat)
+            nrow = mat.shape[0]
+            st = int(nrow * 0.1)
+            en = int(nrow * 0.9)
+            matsum = np.sum(mat, axis=1)
+            zeroindex = np.where(matsum == 0)
+            is_chr_in = 'chr' in chr
+            if is_chr_in:
+                print('Background distribution generation - '+str(chr))
+            else:
+                print('Background distribution generation - chr'+str(chr))
+            ss = samplesize[c]
+            pool = [x for x in list(range(st, en + 1)) if x not in zeroindex[0].tolist()]
+            randval = random.choices(pool, k=ss)
+            '''
+            if chr == chromnames2[0]:
+                i_start = 0
+                i_end = samplesize[0]
+            else:
+                i_start = np.sum(samplesize[0:c])
+                i_end = np.sum(samplesize[0:c + 1])
+            i_start = int(i_start)
+            i_end = int(i_end)
+            '''
+            tableft = np.zeros((400, ss))
+            tabcenter = np.zeros((400, ss))
+            tabright = np.zeros((400, ss))
+
+            for i in range(ss):
+                x = randval[i]
+                for j in range(0, 400):
+                    y = x + j
+                    tableft[j, i] = np.mean(mat[(y - 2):(y + 3), (x - 7):(x - 2)])
+                    tabcenter[j, i] = np.mean(mat[(y - 2):(y + 3), (x - 2):(x + 3)])
+                    tabright[j, i] = np.mean(mat[(y - 2):(y + 3), (x + 3):(x + 8)])
+            bgleft = np.subtract(tabcenter, tableft)
+            bgright = np.subtract(tabcenter, tabright)
+            del mat
+            return bgleft, bgright
+        # apply parallel.
+        result = Parallel(n_jobs=self.core)(delayed(main_null_calc)(chr) for chr in chromnames2)
+        bgleft = np.zeros((400,0))
+        bgright = np.zeros((400,0))
+        for i in range(len(result)):
+            bl,br = result[i]
+            bgleft=np.column_stack((bgleft,bl))
+            bgright=np.column_stack((bgright,br))
+
+        print('Elapsed time for background estimation: ' + str(np.round((time.time() - t_background_start) / 60, 3)) + ' min')
+        return bgleft, bgright
+    '''
         with Bar('Background contrast distribution', max=len(chromnames2)) as bar:
             for chr in chromnames2:
                 mat = self.unbalLib.fetch(chr)
@@ -77,16 +130,12 @@ class getStripe:
                     L += 1
                     for j in range(0, 400):
                         y = x + j
-                        tableft[j][i] = np.mean(mat[(y - 2):(y + 3), (x - 7):(x - 2)])
-                        tabcenter[j][i] = np.mean(mat[(y - 2):(y + 3), (x - 2):(x + 3)])
-                        tabright[j][i] = np.mean(mat[(y - 2):(y + 3), (x + 3):(x + 8)])
+                        tableft[j,i] = np.mean(mat[(y - 2):(y + 3), (x - 7):(x - 2)])
+                        tabcenter[j,i] = np.mean(mat[(y - 2):(y + 3), (x - 2):(x + 3)])
+                        tabright[j,i] = np.mean(mat[(y - 2):(y + 3), (x + 3):(x + 8)])
                 bar.next()
-            bgleft = np.subtract(tabcenter, tableft)
-            bgright = np.subtract(tabcenter, tabright)
-            del mat
-        print('Elapsed time for background estimation: ' + str(
-            np.round((time.time() - t_background_start) / 60, 3)) + ' min')
-        return bgleft, bgright
+        '''
+
 
     def _nulldist2(self):
         # null distribution based on distance-decay normalized values.
@@ -105,7 +154,7 @@ class getStripe:
         c = 0
         with Bar('Background contrast distribution', max=len(chromnames2)) as bar:
             for chr in chromnames2:
-                mat = self.balLib.fetch(chr)
+                mat = self.unbalLib.fetch(chr)
                 mat = nantozero(mat)
                 normmat = stats.observed_over_expected(mat)
                 normmat = normmat[0]
@@ -287,7 +336,7 @@ class getStripe:
             print(c)
             t0 = time.time()
             idx = np.where(df['chr'] == c)[0].tolist()
-            mat = self.balLib.fetch(c)
+            mat = self.unbalLib.fetch(c)
             mat = nantozero(mat)
             print('time for loading matrix:' + str(time.time()-t0) + 's.')
 
@@ -339,13 +388,65 @@ class getStripe:
         K_xr = np.array([[1, -1], [2, -2], [1, -1]])
         K_y = np.array([[1, 2, 1], [0, 0, 0], [-1, -2, -1]])
         chrset = list(set(df['chr']))
-        listg = [0 for x in range(df.shape[0])]
 
+
+        def calc_stripiness(c):
+            t0 = time.time()
+            idx = np.where(df['chr'] == c)[0].tolist()
+            listg = [0 for x in range(len(idx))]
+            mat = self.unbalLib.fetch(c)
+            mat = nantozero(mat)
+            print('Time for loading '+str(c)+' matrix: '+str(time.time()-t0) + 's.')
+
+            t0 = time.time()
+            normmat = stat.observed_over_expected(mat)
+            normmat = normmat[0]
+            del mat
+            print('time for distance decay-normalization: ' + str(time.time() - t0) + 's.')
+            N=0
+            for i in idx:
+                t0 = time.time()
+                x_start_index = int((df['pos1'].iloc[i] - 1) / self.resol)
+                x_end_index = int(df['pos2'].iloc[i] / self.resol)
+                y_start_index = int((df['pos3'].iloc[i] - 1) / self.resol)
+                y_end_index = int(df['pos4'].iloc[i] / self.resol)
+
+                center = extract_from_matrix(normmat, x_start_index, x_end_index, y_start_index, y_end_index)
+                left = extract_from_matrix(normmat, x_start_index - 5, x_start_index, y_start_index, y_end_index)
+                right = extract_from_matrix(normmat, x_end_index, x_end_index + 5, y_start_index, y_end_index)
+
+                centerm = np.mean(center, axis=1)
+                leftm = np.mean(left, axis=1)
+                rightm = np.mean(right, axis=1)
+
+                g_xl = stats.elementwise_product_sum(K_xl, leftm, centerm)
+                g_xr = stats.elementwise_product_sum(K_xr, centerm, rightm)
+                g_y = stats.elementwise_product_sum(K_y, leftm, centerm, rightm)
+                g_x = np.minimum(g_xl, g_xr)
+                diff = [a - b for a, b in zip(g_x, g_y)]
+                avgdiff = np.mean(diff)
+                g = np.median(centerm) * avgdiff
+                listg[N] = g
+                N+=1
+            del normmat
+            return idx, listg
+        # In parallel
+        result = Parallel(n_jobs=self.core)(delayed(calc_stripiness)(chr) for chr in chrset)
+        list_idx = []
+        list_stripiness = []
+        for i in range(len(result)):
+            idx,stripiness = result[i]
+            list_idx = list_idx + idx
+            list_stripiness = list_stripiness + stripiness
+        list_stripiness2 = [x for _,x in sorted(list_idx, list_stripiness)]
+        return list_stripiness2
+
+        '''
         for c in chrset:
             print(c)
             t0 = time.time()
             idx = np.where(df['chr'] == c)[0].tolist()
-            mat = self.balLib.fetch(c)
+            mat = self.unbalLib.fetch(c)
             mat = nantozero(mat)
             print('time for loading matrix:' + str(time.time()-t0) + 's.')
 
@@ -381,7 +482,7 @@ class getStripe:
                     print('time for calculating stripiness for a line is: '+ str(time.time()-t0) + 's.')
             del normmat
         return df['chr'], df['pos1'], df['pos2'], df['pos3'], df['pos4'], listg
-
+        '''
     def extract(self, mp, bgleft, bgright):
         max_width_dist1 = []
         max_width_dist2 = []
@@ -391,7 +492,6 @@ class getStripe:
         for chridx in range(len(self.chromnames)):
             t_chr_search = time.time()
             chr = self.chromnames[chridx]
-            print(chr)
             cfm = self.unbalLib.fetch(chr)  # cfm : contact frequency matrix
             M = stats.quantile(cfm[cfm > 0], mp)
             rowsize = cfm.shape[0]
@@ -438,18 +538,15 @@ class getStripe:
                     bar.next()
             print('Elapsed time: ' + str(np.round((time.time() - t_chr_search) / 60, 3)) + ' min (top ' + str(
                 np.round((1 - mp) * 100, 2)) + '%)')
-        time_remove_redundant = time.time()
-        print('The number of lines: ' + str(result.shape[0]))
         res = self.RemoveRedundant(result, 'size')
-        print(time.time()-time_remove_redundant)
         res = res.reset_index(drop=True)
 
         # Stripe filtering and scoring
         # res2 = self.scoringstripes(res)
         p = self.pvalue(bgleft, bgright, res)
-        s = self.scoringstripes(res)
+        #s = self.scoringstripes(res)
         res = res.assign(pvalue=pd.Series(p))
-        res = res.assign(Stripiness=pd.Series(s[5]))
+        #res = res.assign(Stripiness=pd.Series(s[5]))
 
         return res, max_width_dist1, max_width_dist2
 
@@ -750,8 +847,8 @@ class getStripe:
         return result
 
     def RemoveRedundant(self, df, by):
-        if by != 'size' and by != 'score':
-            raise ValueError('"by" should be one of "size" and "score"')
+        if by != 'size' and by != 'score' and by != 'pvalue':
+            raise ValueError('"by" should be one of "size", "pvalue" and "score"')
         df_size = df.shape
         row_size = df_size[0]
         if row_size == 0:
@@ -767,6 +864,8 @@ class getStripe:
             list_w = df['w'].tolist()
             if by == 'score':
                 list_stri = df['Stripiness'].tolist()
+            if by == 'pvalue':
+                list_pval = df['pvalue'].tolist()
             unique_chr = list(set(list_chr))
             for c in unique_chr:
                 c_idx = np.where(list_chr == c)[0]
@@ -808,6 +907,11 @@ class getStripe:
                                         delobj[jj] = False
                                 elif by == 'score':
                                     if list_stri[ii] <= list_stri[jj]:
+                                        delobj[ii] = False
+                                    else:
+                                        delobj[jj] = False
+                                else:
+                                    if list_pval[ii] > list_pval[jj]:
                                         delobj[ii] = False
                                     else:
                                         delobj[jj] = False

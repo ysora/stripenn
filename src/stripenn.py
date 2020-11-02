@@ -111,9 +111,8 @@ def main():
 
 
     unbalLib = Lib.matrix(balance=False)
-    balLib = Lib.matrix(balance=False)
     resol = Lib._info['bin-size']
-    obj = getStripe(unbalLib, balLib, resol, minH, maxW, canny, chromnames, chromsizes,core)
+    obj = getStripe(unbalLib, resol, minH, maxW, canny, chromnames, chromsizes,core)
     bgleft, bgright = getStripe.nulldist(obj)
     result = Parallel(n_jobs = core)(delayed(obj.extract)(mp, bgleft, bgright) for mp in maxpixel)
     result_table = result[0][0]
@@ -123,8 +122,10 @@ def main():
     if len(result) > 1:
         for i in range(len(result)):
             result_table = pd.concat([result_table, result[i][0]])
-    result_table = getStripe.RemoveRedundant(obj,df=result_table,by='score')
+    result_table = getStripe.RemoveRedundant(obj,df=result_table,by='pvalue')
     res_filter = result_table[result_table['pvalue'] < pcut]
+    s = obj.scoringstripes(res_filter)
+    res_filter = res_filter.assign(Stripiness=pd.Series(s))
     res_filter = res_filter.sort_values(by=['Stripiness'], ascending=False)
 
     res1 = out + 'result.txt'
