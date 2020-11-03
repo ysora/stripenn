@@ -2,7 +2,7 @@ import argparse
 import cooler
 import multiprocessing
 from joblib import Parallel, delayed
-from getStripe import getStripe
+import getStripe
 import os
 import shutil
 import errno
@@ -54,7 +54,6 @@ def makeOutDir(outdir, maxpixel):
             print('All directories and files in %s will be deleted.' % (outdir))
             for filename in os.listdir(outdir):
                 file_path = os.path.join(outdir, filename)
-                print(file_path)
                 try:
                     if os.path.isfile(file_path) or os.path.islink(file_path):
                         os.unlink(file_path)
@@ -66,7 +65,7 @@ def makeOutDir(outdir, maxpixel):
             print('Input another output directory. Exit.')
             quit()
         else:
-            print('Type Y or n.')
+            print('Type Y or n.\nExit.')
             quit()
     else:
         try:
@@ -74,6 +73,7 @@ def makeOutDir(outdir, maxpixel):
         except OSError as e:
             if e.errno != errno.EEXIST:
                 raise
+    '''
     imagedir = os.path.join(outdir, 'images')
     os.makedirs(imagedir, mode=0o777, exist_ok=False)
 
@@ -81,7 +81,7 @@ def makeOutDir(outdir, maxpixel):
         top = round(100*(1-mp),2)
         dirname = os.path.join(imagedir, 'top'+ str(top) + '%')
         os.makedirs(dirname, mode=0o777, exist_ok=False)
-
+    '''
 def main():
     t_start = time.time()
     cool, out, chroms, canny, minH, maxW, maxpixel, core, pcut = argumentParser()
@@ -112,37 +112,40 @@ def main():
 
     unbalLib = Lib.matrix(balance=False)
     resol = Lib._info['bin-size']
-    obj = getStripe(unbalLib, resol, minH, maxW, canny, chromnames, chromsizes,core)
-    bgleft, bgright = getStripe.nulldist(obj)
-    result = Parallel(n_jobs = core)(delayed(obj.extract)(mp, bgleft, bgright) for mp in maxpixel)
-    result_table = result[0][0]
-    print(result_table)
-    max_width_dist1 = result[0][1]
-    max_width_dist2 = result[0][2]
+    obj = getStripe.getStripe(unbalLib, resol, minH, maxW, canny, chromnames, chromsizes,core)
+    print('\n#######################################\nBackground distribution estimation ...\n#######################################\n')
+    bgleft, bgright = getStripe.getStripe.nulldist(obj)
+    print('\n#######################################\nSearch stripes from each chromosome ...\n#######################################\n')
+    result_table = pd.DataFrame(columns=['chr', 'pos1', 'pos2', 'chr2', 'pos3', 'pos4', 'length', 'width', 'total', 'Mean',
+                                   'maxpixel', 'num', 'start', 'end', 'x', 'y', 'h', 'w', 'medpixel','pvalue'])
+    for mp in maxpixel:
+        result = obj.extract(mp, bgleft, bgright)
+        result_table = result_table.append(result)
+    #result = Parallel(n_jobs = core)(delayed(obj.extract)(mp, bgleft, bgright) for mp in maxpixel)
+    #result_table = result[0]
+    #max_width_dist1 = result[0][1]
+    #max_width_dist2 = result[0][2]
+    '''
     if len(result) > 1:
         for i in range(len(result)):
-            result_table = pd.concat([result_table, result[i][0]])
-    result_table = getStripe.RemoveRedundant(obj,df=result_table,by='pvalue')
+            result_table = pd.concat([result_table, result[i]])
+    '''
+    result_table = getStripe.getStripe.RemoveRedundant(obj,df=result_table,by='pvalue')
     res_filter = result_table[result_table['pvalue'] < pcut]
+
+    print('\n########################\nStripiness calculation ...\n########################\n')
     s = obj.scoringstripes(res_filter)
-    res_filter = res_filter.assign(Stripiness=pd.Series(s))
+    #res_filter = res_filter.assign(Stripiness=pd.Series(s))
+    #res_filter['Stripiness'] = s
+    res_filter.insert(res_filter.shape[1],'Stripiness',s,True)
+    res_filter.to_csv(out + 'result_filtered_before_sorting.txt',sep='\t',header=True,index=False)
     res_filter = res_filter.sort_values(by=['Stripiness'], ascending=False)
 
     res1 = out + 'result.txt'
     res2 = out + 'result_filtered.txt'
-    res3 = out + 'dist_width1.txt'
-    res4 = out + 'dist_width2.txt'
 
     result_table.to_csv(res1,sep="\t",header=True,index=False)
     res_filter.to_csv(res2,sep="\t",header=True,index=False)
-
-    with open(res3, 'w') as f2:
-        for item in max_width_dist1:
-            f2.write("%i\n" % item)
-    with open(res4, 'w') as f3:
-        for item in max_width_dist2:
-            f3.write("%i\n" % item)
-
 
     #final_result = merge(temp_rseult)
     #final_result.save(out)
