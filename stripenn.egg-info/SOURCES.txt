@@ -1,6 +1,14 @@
+README.md
+setup.cfg
 setup.py
-stripenn
+src/ImageProcessing.py
+src/__init__.py
+src/getStripe.py
+src/stats.py
+src/stripenn.py
 stripenn.egg-info/PKG-INFO
 stripenn.egg-info/SOURCES.txt
 stripenn.egg-info/dependency_links.txt
+stripenn.egg-info/entry_points.txt
+stripenn.egg-info/requires.txt
 stripenn.egg-info/top_level.txt

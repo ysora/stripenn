@@ -1,0 +1,10 @@
+cooler
+pandas
+numpy
+matplotlib
+opencv-python
+scikit-image
+scipy
+joblib
+tqdm
+Bottleneck
