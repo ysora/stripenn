@@ -1,0 +1,3 @@
+[console_script]
+stripenn = src.stripenn:main
+
