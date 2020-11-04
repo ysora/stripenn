@@ -17,7 +17,7 @@ setuptools.setup(
     description = 'Architectural stripe detection program',
     long_description = "Architectural stripe detection tool using image processing methods",
     long_description_content_type = 'text/markdown',
-    url = 'https://github.com/VahediLab/stripenn',
+    url = 'https://github.com/ysora/stripenn-python',
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",

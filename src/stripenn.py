@@ -11,6 +11,7 @@ import numpy as np
 import warnings
 import time
 import sys
+import logging
 
 def argumentParser():
     parser = argparse.ArgumentParser(description='Stripenn')
@@ -48,10 +49,10 @@ def makeOutDir(outdir, maxpixel):
     if last != '/':
         outdir += '/'
     if os.path.exists(outdir):
-        print('%s exists. Do you want to remove all files and save new results in this folder? [Y/n]' % (outdir))
+        logging.info('%s exists. Do you want to remove all files and save new results in this folder? [Y/n]' % (outdir))
         userinput = input()
         if userinput == 'Y' or userinput == 'y':
-            print('All directories and files in %s will be deleted.' % (outdir))
+            logging.info('All directories and files in %s will be deleted.' % (outdir))
             for filename in os.listdir(outdir):
                 file_path = os.path.join(outdir, filename)
                 try:
@@ -60,12 +61,12 @@ def makeOutDir(outdir, maxpixel):
                     elif os.path.isdir(file_path):
                         shutil.rmtree(file_path)
                 except Exception as e:
-                    print('Failed to delete %s with the reason: %s' % (file_path, e))
+                    logging.exception('Failed to delete %s with the reason: %s' % (file_path, e))
         elif userinput == 'n' or userinput == 'N':
-            print('Input another output directory. Exit.')
+            logging.info('Input another output directory. Exit.')
             quit()
         else:
-            print('Type Y or n.\nExit.')
+            logging.exception('Type Y or n.\nExit.')
             quit()
     else:
         try:
@@ -85,7 +86,7 @@ def makeOutDir(outdir, maxpixel):
 def main():
     t_start = time.time()
     cool, out, chroms, canny, minH, maxW, maxpixel, core, pcut = argumentParser()
-    print('Result will be stored in %s' % (out))
+    logging.info('Result will be stored in %s' % (out))
     makeOutDir(out, maxpixel)
     Lib = cooler.Cooler(cool)
     chromnames = Lib.chromnames
@@ -113,9 +114,9 @@ def main():
     unbalLib = Lib.matrix(balance=False)
     resol = Lib._info['bin-size']
     obj = getStripe.getStripe(unbalLib, resol, minH, maxW, canny, chromnames, chromsizes,core)
-    print('\n#######################################\nBackground distribution estimation ...\n#######################################\n')
+    logging.info('\n#######################################\nBackground distribution estimation ...\n#######################################\n')
     bgleft, bgright = getStripe.getStripe.nulldist(obj)
-    print('\n#######################################\nSearch stripes from each chromosome ...\n#######################################\n')
+    logging.info('\n#######################################\nSearch stripes from each chromosome ...\n#######################################\n')
     result_table = pd.DataFrame(columns=['chr', 'pos1', 'pos2', 'chr2', 'pos3', 'pos4', 'length', 'width', 'total', 'Mean',
                                    'maxpixel', 'num', 'start', 'end', 'x', 'y', 'h', 'w', 'medpixel','pvalue'])
     for mp in maxpixel:
@@ -133,7 +134,7 @@ def main():
     result_table = getStripe.getStripe.RemoveRedundant(obj,df=result_table,by='pvalue')
     res_filter = result_table[result_table['pvalue'] < pcut]
 
-    print('\n########################\nStripiness calculation ...\n########################\n')
+    logging.info('\n########################\nStripiness calculation ...\n########################\n')
     s = obj.scoringstripes(res_filter)
     #res_filter = res_filter.assign(Stripiness=pd.Series(s))
     #res_filter['Stripiness'] = s
@@ -150,7 +151,7 @@ def main():
     #final_result = merge(temp_rseult)
     #final_result.save(out)
     #return final_result
-    print(str(round((time.time()-t_start)/60,3))+'min taken.')
+    logging.info(str(round((time.time()-t_start)/60,3))+'min taken.')
     return 0
 
 if __name__ == "__main__":

@@ -20,6 +20,7 @@ from scipy import signal
 import multiprocessing
 from joblib import Parallel, delayed
 from tqdm import tqdm
+import logging
 
 class getStripe:
     def __init__(self, unbalLib, resol, minH, maxW, canny, chromnames, chromsizes, core):
@@ -103,7 +104,7 @@ class getStripe:
             bgleft=np.column_stack((bgleft,bl))
             bgright=np.column_stack((bgright,br))
 
-        print('Elapsed time for background estimation: ' + str(np.round((time.time() - t_background_start) / 60, 3)) + ' min')
+        logging.info('Elapsed time for background estimation: ' + str(np.round((time.time() - t_background_start) / 60, 3)) + ' min')
         return bgleft, bgright
     '''
         with Bar('Background contrast distribution', max=len(chromnames2)) as bar:
@@ -282,56 +283,7 @@ class getStripe:
         return PVAL
 
 
-    def pvalue2(self, bg, df):
-        chrset = list(set(df['chr']))
-        listp = [1 for x in range(df.shape[0])]
-        for c in chrset:
-            print(c)
-            t0 = time.time()
-            idx = np.where(df['chr'] == c)[0].tolist()
-            mat = self.unbalLib.fetch(c)
-            mat = nantozero(mat)
-            print('time for loading matrix:' + str(round(time.time()-t0,3)) + 's.')
 
-            t0 = time.time()
-            normmat = stats.observed_over_expected(mat)
-            normmat = normmat[0]
-            del mat
-            print('Time for distance decay-normalization: ' + str(round(time.time()-t0,3)) + 's.')
-            for i in idx:
-                pvalues=[]
-                pos1 = df['pos1'].iloc[i]
-                pos2 = df['pos2'].iloc[i]
-                pos3 = df['pos3'].iloc[i]
-                pos4 = df['pos4'].iloc[i]
-
-                x_start_index = int((pos1 - 1) / self.resol)
-                x_end_index = int(pos2 / self.resol)
-                y_start_index = int((pos3 - 1) / self.resol)
-                y_end_index = int(pos4 / self.resol)
-
-                center = extract_from_matrix(normmat, x_start_index, x_end_index, y_start_index, y_end_index)
-                left = extract_from_matrix(normmat, x_start_index - 5, x_start_index, y_start_index, y_end_index)
-                right = extract_from_matrix(normmat, x_end_index, x_end_index + 5, y_start_index, y_end_index)
-
-                centerm = np.mean(center, axis=1)
-                leftm = np.mean(left, axis=1)
-                rightm = np.mean(right, axis=1)
-
-                left_diff = np.subtract(centerm, leftm)
-                right_diff = np.subtract(centerm, rightm)
-
-                for j in range(len(center)):
-                    p1 = len(np.where(bg >= left_diff[j])[0]) / len(bg)
-                    p2 = len(np.where(bg >= right_diff[j])[0]) / len(bg)
-
-                    pval = max(p1, p2)
-                    if pval == 0:
-                        pval = 0.001
-                    pvalues.append(pval)
-                listp[i] = np.median(pvalues)
-            del normmat
-        return listp
 
 
     def scoringstripes(self, df):
@@ -371,13 +323,13 @@ class getStripe:
             idx = np.where(df['chr'] == c)[0].tolist()
             mat = self.unbalLib.fetch(c)
             mat = nantozero(mat)
-            print('Time for loading '+str(c)+' matrix: '+str(time.time()-t0) + 's.')
+            logging.info('Time for loading '+str(c)+' matrix: '+str(time.time()-t0) + 's.')
 
             t0 = time.time()
             normmat = stats.observed_over_expected(mat)
             normmat = normmat[0]
             del mat
-            print('time for distance decay-normalization: ' + str(time.time() - t0) + 's.')
+            logging.info('time for distance decay-normalization: ' + str(time.time() - t0) + 's.')
             result = Parallel(n_jobs=self.core)(delayed(iterate_idx)(i) for i in tqdm(idx))
             del normmat
             for r in range(len(result)):
@@ -466,7 +418,7 @@ class getStripe:
         for chridx in range(len(self.chromnames)):
             t_chr_search = time.time()
             chr = self.chromnames[chridx]
-            print('Chromosome: ' + str(chr) + " / Maximum pixel: " + str(round(mp*100,3))+"%")
+            logging.info('Chromosome: ' + str(chr) + " / Maximum pixel: " + str(round(mp*100,3))+"%")
             cfm = self.unbalLib.fetch(chr)  # cfm : contact frequency matrix
             M = stats.quantile(cfm[cfm > 0], mp)
             rowsize = cfm.shape[0]
@@ -771,62 +723,6 @@ class getStripe:
 
         result = self.RemoveRedundant(result, 'size')
 
-        return result
-
-    def RemoveRedundant_slow(self, df, by):
-        if by != 'size' and by != 'score':
-            raise ValueError('"by" should be one of "size" and "score"')
-        df_size = df.shape
-        row_size = df_size[0]
-        if row_size == 0:
-            return df
-        else:
-            delobj = [True for i in range(row_size)]
-            for i in range(row_size - 1):
-                if i == 1:
-                    t0=time.time()
-                if i == 2:
-                    print('It took '+str(time.time()-t0)+' sec. for a loop')
-                for j in range(i + 1, row_size):
-                    t_test = time.time()
-                    A = df.iloc[i]
-                    B = df.iloc[j]
-                    print(time.time() - t_test)
-
-                    list_num = df['num'].tolist()
-                    list_chr = df['chr'].tolist()
-
-                    t0 = time.time()
-                    test = (abs(list_num[i] - list_num[j]) > 1) or (list_chr[i] != list_chr[j])
-                    print(time.time()-t0)
-
-                    if (abs(df['num'].iloc[i] - df['num'].iloc[j]) > 1) or (df['chr'].iloc[i] != df['chr'].iloc[j]):
-                        continue
-                    else:
-                        A_x = range(A['pos1'], A['pos2'])
-                        B_x = range(B['pos1'], B['pos2'])
-                        A_y = range(A['pos3'], A['pos4'])
-                        B_y = range(B['pos3'], B['pos4'])
-
-                        int_x = range(max(A_x[0], B_x[0]), min(A_x[-1], B_x[-1]) + 1)
-                        int_y = range(max(A_y[0], B_y[0]), min(B_y[-1], B_y[-1]) + 1)
-
-                        s_x = len(int_x) / min(len(A_x), len(B_x))
-                        s_y = len(int_y) / min(len(A_y), len(B_y))
-
-                        if s_x > 0.2 and s_y > 0.2:
-                            if by == 'size':
-                                if A['h'] * A['w'] <= B['h'] * B['w']:
-                                    delobj[i] = False
-                                else:
-                                    delobj[j] = False
-                            elif by == 'score':
-                                if A['Stripiness'] <= B['Stripiness']:
-                                    delobj[i] = False
-                                else:
-                                    delobj[i] = False
-        idx = [i for i in range(row_size) if delobj[i]]
-        result = df.iloc[idx]
         return result
 
     def RemoveRedundant(self, df, by):

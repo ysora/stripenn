@@ -1,5 +1,6 @@
 import numpy as np
 import bottleneck as bn
+import scipy
 
 def quantile(a, prob):
     """
@@ -45,96 +46,6 @@ def quantile(a, prob):
         if np.isinf(smaller):
             return smaller # avoid int - inf
         return smaller + (larger - smaller) * (t - i)
-
-def observed_over_expected2(
-    matrix, mask=np.empty(shape=(0), dtype=np.bool_), dist_bin_edge_ratio=1.03
-):
-    """
-    Normalize the contact matrix for distance-dependent contact decay.
-    The diagonals of the matrix, corresponding to contacts between loci pairs
-    with a fixed distance, are grouped into exponentially growing bins of
-    distances; the diagonals from each bin are normalized by their average value.
-    Parameters
-    ----------
-    matrix : np.ndarray
-        A 2D symmetric matrix of contact frequencies.
-    mask : np.ndarray
-        A 1D or 2D mask of valid data.
-        If 1D, it is interpreted as a mask of "good" bins.
-        If 2D, it is interpreted as a mask of "good" pixels.
-    dist_bin_edge_ratio : float
-        The ratio of the largest and the shortest distance in each distance bin.
-    Returns
-    -------
-    OE : np.ndarray
-        The diagonal-normalized matrix of contact frequencies.
-    dist_bins : np.ndarray
-        The edges of the distance bins used to calculate average
-        distance-dependent contact frequency.
-    sum_pixels : np.ndarray
-        The sum of contact frequencies in each distance bin.
-    n_pixels : np.ndarray
-        The total number of valid pixels in each distance bin.
-    """
-    t0 = time.time()
-    N = matrix.shape[0]
-    mask2d = np.empty(shape=(0, 0), dtype=np.bool_)
-
-    if mask.ndim == 1:
-        if mask.size > 0:
-            mask2d = mask.reshape((1, -1)) * mask.reshape((-1, 1))
-    elif mask.ndim == 2:
-        # Numba expects mask to be a 1d array, so we need to hint
-        # that it is now a 2d array
-        mask2d = mask.reshape((int(np.sqrt(mask.size)), int(np.sqrt(mask.size))))
-    else:
-        raise ValueError("The mask must be either 1D or 2D.")
-
-    data = np.copy(matrix).astype(np.float64)
-    print(time.time()-t0) # This is 4s
-
-    t0 = time.time()
-    has_mask = mask2d.size > 0
-    dist_bins = _logbins_numba(1, N, dist_bin_edge_ratio)
-    dist_bins = np.concatenate((np.array([0]), dist_bins))
-    n_pixels_arr = np.zeros_like(dist_bins[1:])
-    sum_pixels_arr = np.zeros_like(dist_bins[1:], dtype=np.float64)
-    dist_bins_max = np.max(np.where(dist_bins < 500))
-    bin_idx, n_pixels, sum_pixels = 0, 0, 0
-    print(time.time()-t0)
-
-    t0 = time.time()
-    for bin_idx, lo, hi in zip(
-        range(dist_bins_max), dist_bins[:-1], dist_bins[1:]
-    ):
-        t1 = time.time()
-        sum_pixels = 0
-        n_pixels = 0
-        for offset in range(lo, hi):
-            for j in range(0, N - offset):
-                if not has_mask or mask2d[offset + j, j]:
-                    sum_pixels += data[offset + j, j]
-                    n_pixels += 1
-
-        n_pixels_arr[bin_idx] = n_pixels
-        sum_pixels_arr[bin_idx] = sum_pixels
-
-        if n_pixels == 0:
-            continue
-        mean_pixel = sum_pixels / n_pixels
-        if mean_pixel == 0:
-            continue
-
-        for offset in range(lo, hi):
-            for j in range(0, N - offset):
-                if not has_mask or mask2d[offset + j, j]:
-
-                    data[offset + j, j] /= mean_pixel
-                    if offset > 0:
-                        data[j, offset + j] /= mean_pixel
-        print(time.time()-t1)
-    print(time.time()-t0)
-    return data, dist_bins, sum_pixels_arr, n_pixels_arr
 
 
 def make_expected_vals(cooler, Ndiags):
