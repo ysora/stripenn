@@ -1,0 +1,1 @@
+Architectural stripe detection tool
