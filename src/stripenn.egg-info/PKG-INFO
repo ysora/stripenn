@@ -1,12 +1,12 @@
 Metadata-Version: 2.1
 Name: stripenn
-Version: 1.0.4
+Version: 1.0.17
 Summary: Image-processing based detection of architectural stripes from chromatic conformation data
-Home-page: https://github.com/ysora/stripenn-python
+Home-page: https://github.com/ysora/stripenn
 Author: Sora Yoon
 Author-email: sora.yoon@pennmedicine.upenn.edu
 License: UNKNOWN
-Description: Stripenn
+Description: Architectural stripe detection tool
         
 Platform: UNKNOWN
 Classifier: Programming Language :: Python :: 3

@@ -1,1 +1,1 @@
-Stripenn
+Architectural stripe detection tool

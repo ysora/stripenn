@@ -2,7 +2,7 @@ import argparse
 import cooler
 import multiprocessing
 from joblib import Parallel, delayed
-import getStripe
+from src.stripenn import getStripe
 import os
 import shutil
 import errno
