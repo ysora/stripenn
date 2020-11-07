@@ -38,3 +38,16 @@ Open terminal and type following:
     
 If pip is not installed, install pip first: `pip installation <https://pip.pypa.io/en/stable/installing/>`_
 
+**Windows**
+
+Windows users will fail to install stripenn using the above command. This is because the pypairix package installed with the cooler package does not support Windoes. But we can still install stripenn on Windows! The strategy is (1) to install all dependency packages except pypairix and then (2) to install stripenn without dependency packages. To do this, type followings on command windows:
+::
+
+   pip install simplejson multiprocess pandas numpy matplotlib opencv-python scikit-image scipy joblib tqdm Bottleneck
+   pip install --no-deps cooler
+   pip install --no-deps stripenn
+
+If you have any trouble with installation, please leave it on issue board.
+
+Example run
+############
