@@ -63,3 +63,15 @@ Here, the example mcool file contains Hi-C data of mouse activated B cell (`Vian
 Stripes were searched from chromosome 19 of 5kb-resolution data for short running time.
 
 **Output**
+::
+
+   cat output_dir/result_filtered.txt
+   
+will show following table. 
+
+.. csv-table:: result_filtered.txt
+   :header: "chr_1", "pos1","pos2","chr_2","pos3","pos4","length","width","Mean","maxpixel","pvalue","Stripiness"
+   
+   "chr19", "-", "-", "chr19", "-", "-", "-", "-", "-", "99.0%", "-", "-"
+   "chr19", "-", "-", "chr19", "-", "-", "-", "-", "-", "99.0%", "-", "-"
+   "chr19", "-", "-", "chr19", "-", "-", "-", "-", "-", "99.0%", "-", "-"
