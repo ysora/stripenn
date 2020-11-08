@@ -9,6 +9,8 @@ Architectural stripe detection from 3D genome conformation data
    :target: https://pypi.org/project/stripenn/
    
 .. image:: https://github.com/ysora/stripenn/blob/main/image/example_call.png
+   :height: 20px
+   :width: 20px
 
 Contents
 ########
@@ -67,7 +69,7 @@ Stripes were searched from chromosome 19 of 5kb-resolution data for short runnin
 
    cat output_dir/result_filtered.txt
    
-will show following table. 
+will show a result table including 12 columns like below.
 
 .. csv-table:: result_filtered.txt
    :header: "chr_1", "pos1","pos2","chr_2","pos3","pos4","length","width","Mean","maxpixel","pvalue","Stripiness"
@@ -75,3 +77,20 @@ will show following table.
    "chr19", "-", "-", "chr19", "-", "-", "-", "-", "-", "99.0%", "-", "-"
    "chr19", "-", "-", "chr19", "-", "-", "-", "-", "-", "99.0%", "-", "-"
    "chr19", "-", "-", "chr19", "-", "-", "-", "-", "-", "99.0%", "-", "-"
+
+Each line represents the coordinates and other information of a vertical stripe.
+
+.. image:: https://github.com/ysora/stripenn/blob/main/image/readme1.png
+
+* chr_1: chromosome
+* pos1: x1 position of stripe
+* pos2: x2 position of stripe
+* chr_2: chromosome (same as chr_1)
+* pos3: y1 position of stripe
+* pos4: y2 position of stripe
+* length: Length of vertical stripe (y2-y1+1)
+* width: Width of vertical stripe (x2-x1+1)
+* mean: Average pixel value within stripe
+* maxpixel: 뭐라고 해야되지? 
+* pvalue: P-value of the stripe
+* Stripiness: Score of the stripe
