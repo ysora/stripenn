@@ -58,7 +58,8 @@ Let's check if stripenn is working or not with a simple example.
    wget https://data.4dnucleome.org/files-processed/4DNFISA93XFU/@@download/4DNFISA93XFU.mcool -O Vian_aB_30hrs.mcool
    stripenn Vian_aB_30hrs.mcool::resolutions/5000 output_dir/ -k chr19 -m 0.99
    
-Here, the example mcool file contains Hi-C data of mouse activated B cell (`Vian et al., Cell, 2018 <https://www.sciencedirect.com/science/article/pii/S0092867418304045>`_)
+Here, the example mcool file contains Hi-C data of mouse activated B cell (`Vian et al., Cell, 2018 <https://www.sciencedirect.com/science/article/pii/S0092867418304045>`_).
+
 Stripes were searched from chromosome 19 of 5kb-resolution data for short running time.
 
 **Output**
