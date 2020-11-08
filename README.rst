@@ -40,7 +40,7 @@ If pip is not installed, install pip first: `pip installation <https://pip.pypa.
 
 **Windows**
 
-Windows users will fail to install stripenn using the above command. This is because the pypairix package installed with the cooler package does not support Windoes. But we can still install stripenn on Windows! The strategy is (1) to install all dependency packages except pypairix and then (2) to install stripenn without dependency packages. To do this, type followings on command windows:
+Windows users will fail to install stripenn using the above command. This is because the pypairix package installed with the cooler package does not support Windows. But we can still install stripenn on Windows! The strategy is (1) to install all dependency packages except pypairix and then (2) to install stripenn without dependency packages. To do this, type followings on command windows:
 ::
 
    pip install simplejson multiprocess pandas numpy matplotlib opencv-python scikit-image scipy joblib tqdm Bottleneck
@@ -58,7 +58,7 @@ Let's check if stripenn is working or not with a simple example.
    wget https://data.4dnucleome.org/files-processed/4DNFISA93XFU/@@download/4DNFISA93XFU.mcool -O Vian_aB_30hrs.mcool
    stripenn Vian_aB_30hrs.mcool::resolutions/5000 output_dir/ -k chr19 -m 0.99
    
-Here, the example mcool file contains Hi-C data of mouse activated B cell (`Vian et al., Cell, 2018<https://www.sciencedirect.com/science/article/pii/S0092867418304045>`_)
+Here, the example mcool file contains Hi-C data of mouse activated B cell (`Vian et al., Cell, 2018 <https://www.sciencedirect.com/science/article/pii/S0092867418304045>`_)
 Stripes were searched from chromosome 19 of 5kb-resolution data for short running time.
 
 **Output**
