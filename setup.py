@@ -7,7 +7,7 @@ README = (HERE / "README.md").read_text()
 
 setup(
     name = 'stripenn',
-    version = '1.0.17',
+    version = '1.0.23',
     author = 'Sora Yoon',
     author_email = 'sora.yoon@pennmedicine.upenn.edu',
     description = "Image-processing based detection of architectural stripes from chromatic conformation data",
@@ -21,7 +21,7 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    install_requires=["cooler","pandas","numpy","matplotlib","opencv-python","scikit-image","scipy","joblib","tqdm","Bottleneck"],
+    install_requires=["cooler","pandas","numpy","matplotlib","opencv-python","scikit-image","scipy","joblib","tqdm"],
     entry_points={
     	"console_scripts": ["stripenn=stripenn.stripenn:main"]
     },
