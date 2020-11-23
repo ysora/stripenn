@@ -1,7 +1,7 @@
 import numpy as np
-import bottleneck as bn
 import scipy
 
+'''
 def quantile(a, prob):
     """
     Estimates the prob'th quantile of the values in a data array.
@@ -46,7 +46,7 @@ def quantile(a, prob):
         if np.isinf(smaller):
             return smaller # avoid int - inf
         return smaller + (larger - smaller) * (t - i)
-
+'''
 
 def make_expected_vals(cooler, Ndiags):
     vals = {}

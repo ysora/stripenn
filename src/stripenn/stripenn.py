@@ -1,7 +1,6 @@
 import argparse
 import cooler
 import multiprocessing
-from joblib import Parallel, delayed
 from stripenn import getStripe
 import os
 import shutil
@@ -11,12 +10,12 @@ import numpy as np
 import warnings
 import time
 import sys
-import logging
 
 def argumentParser():
     parser = argparse.ArgumentParser(description='Stripenn')
     parser.add_argument("cool", help="Balanced cool file.")
     parser.add_argument('out', help="Path to output directory.")
+    parser.add_argument('--norm', help="Normalization method. It should be one of the column name of Cooler.bin(). Check it with Cooler.bins().columns (e.g., KR, VC, VC_SQRT)", default='KR')
     parser.add_argument("-k", '--chrom', help="Set of chromosomes. e.g., 'chr1,chr2,chr3', 'all' will generate stripes from all chromosomes", default='all')
     parser.add_argument("-c","--canny", help="Canny edge detection parameter.", default=2.5)
     parser.add_argument('-l','--minL', help="Minimum length of stripe.",default=10)
@@ -31,6 +30,7 @@ def argumentParser():
     out = args.out
     if out[-1] != '/':
         out += '/'
+    norm = args.norm
     chroms = args.chrom
     chroms = chroms.split(',')
     canny = float(args.canny)
@@ -42,7 +42,7 @@ def argumentParser():
     core = int(args.numcores)
     pcut = float(args.pvalue)
 
-    return(cool, out, chroms, canny, minH, maxW, maxpixel, core, pcut)
+    return(cool, out, norm, chroms, canny, minH, maxW, maxpixel, core, pcut)
 
 def makeOutDir(outdir, maxpixel):
     last = outdir[-1]
@@ -84,17 +84,55 @@ def makeOutDir(outdir, maxpixel):
         dirname = os.path.join(imagedir, 'top'+ str(top) + '%')
         os.makedirs(dirname, mode=0o777, exist_ok=False)
     '''
+
+    '''
+    cool = '/home/sora/Documents/
+    cool = '/home/sora/Documents/stripe/hic_files/GSE82144_Kieffer-Kwon-2017-activated_B_cells_72_hours_WT_30.mcool::resolutions/10000'
+    chroms = 'all'
+    canny = 2.5
+    minH=10
+    maxW=8
+    maxpixel=[0.99,0.98,0.97]
+    core=6
+    pcut=0.2
+    result_table = pd.read_csv('/home/sora/Documents/stripe/Zebra/Zebra_unfiltered_processed_connected_to_anchor.txt',header=None,sep='\t')
+    result_table = result_table.rename(columns={0: "chr", 1: 'pos1', 2: 'pos2',3: 'chr2',4: 'pos3', 5: 'pos4'})
+    '''
+
+    '''
+    a = unbalLib.fetch('chr16:96150001-96220000','chr16:95330001-96220000')
+    amean = np.mean(a,axis=0)
+    lef = unbalLib.fetch('chr16:96100001-96150000','chr16:95330001-96220000')
+    lefmean = np.mean(lef,axis=0)
+    rig = unbalLib.fetch('chr16:96220001-96270000','chr16:95330001-96220000')
+    rigmean = np.mean(rig,axis=0)
+    ld = np.subtract(amean,lefmean)
+    rd = np.subtract(amean,rigmean)
+    '''
 def main():
     t_start = time.time()
-    cool, out, chroms, canny, minH, maxW, maxpixel, core, pcut = argumentParser()
+    cool, out, norm, chroms, canny, minH, maxW, maxpixel, core, pcut = argumentParser()
     print('Result will be stored in %s' % (out))
     makeOutDir(out, maxpixel)
     Lib = cooler.Cooler(cool)
+    PossibleNorm = Lib.bins().columns
+    if norm == 'None':
+        norm = False
+    elif norm not in PossibleNorm:
+        print('Possible normalization methods are:')
+        print('None')
+        for n in range(3,len(PossibleNorm)):
+            print(PossibleNorm[n])
+        print("Invalid normalization method. Normalization method is forced to None")
+        norm = False
+
     all_chromnames = Lib.chromnames
     all_chromsizes = Lib.chromsizes
     chrom_remain_idx = np.where(all_chromsizes > 500000)[0]
     all_chromnames = [all_chromnames[i] for i in chrom_remain_idx]
     all_chromsizes = all_chromsizes[chrom_remain_idx]
+    chromnames = all_chromnames
+    chromsizes = all_chromsizes
     if len(all_chromnames) == 0:
         sys.exit("Exit: All chromosomes are shorter than 50kb.")
     warnflag = False
@@ -112,7 +150,7 @@ def main():
         chromsizes = all_chromsizes[idx]
 
 
-    unbalLib = Lib.matrix(balance=False)
+    unbalLib = Lib.matrix(balance=norm)
     resol = Lib._info['bin-size']
     obj = getStripe.getStripe(unbalLib, resol, minH, maxW, canny, all_chromnames, chromnames, all_chromsizes, chromsizes,core)
     print('#######################################\nBackground distribution estimation ...\n#######################################\n')

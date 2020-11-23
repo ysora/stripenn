@@ -244,10 +244,6 @@ class getStripe:
             PVAL.append(np.median(pvalues))
         return PVAL
 
-
-
-
-
     def scoringstripes(self, df):
 
         def iterate_idx(i):
@@ -256,9 +252,16 @@ class getStripe:
             y_start_index = int((df['pos3'].iloc[i] - 1) / self.resol)
             y_end_index = int(df['pos4'].iloc[i] / self.resol)
 
+            leftmost = x_start_index - 5
+            rightmost = x_end_index + 5
+            if leftmost < 1:
+                leftmost = 1
+            if rightmost > normmat.shape[0]:
+                rightmost = normmat.shape[0]-1
+
             center = extract_from_matrix(normmat, x_start_index, x_end_index, y_start_index, y_end_index)
-            left = extract_from_matrix(normmat, x_start_index - 5, x_start_index, y_start_index, y_end_index)
-            right = extract_from_matrix(normmat, x_end_index, x_end_index + 5, y_start_index, y_end_index)
+            left = extract_from_matrix(normmat, leftmost, x_start_index, y_start_index, y_end_index)
+            right = extract_from_matrix(normmat, x_end_index, rightmost, y_start_index, y_end_index)
 
             centerm = np.mean(center, axis=1)
             leftm = np.mean(left, axis=1)
@@ -340,7 +343,7 @@ class getStripe:
             chr = self.chromnames[chridx]
             print('Chromosome: ' + str(chr) + " / Maximum pixel: " + str(round(mp*100,3))+"%")
             cfm = self.unbalLib.fetch(chr)  # cfm : contact frequency matrix
-            M = stats.quantile(cfm[cfm > 0], mp)
+            M = np.quantile(a=cfm[cfm > 0], q=mp, interpolation='linear')
             rowsize = cfm.shape[0]
             del cfm
 
@@ -385,7 +388,7 @@ class getStripe:
         res_h = [];
         res_w = [];
         res_medpixel = []
-        medpixel = stats.quantile(submat[submat > 0], 0.5)
+        medpixel = np.quantile(a=submat[submat > 0], q=0.5)
         st = start
         en = end
         S = framesize
