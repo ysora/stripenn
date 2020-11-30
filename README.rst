@@ -60,7 +60,7 @@ Let's check if stripenn is working or not with a simple example.
 
    cd <Test_Directory> # Move to your test directory
    wget https://data.4dnucleome.org/files-processed/4DNFISA93XFU/@@download/4DNFISA93XFU.mcool -O Vian_aB_30hrs.mcool
-   stripenn compute --cool ../hic/Vian_aB_30hrs.mcool::resolutions/5000 --out output_dir/ -k chr19 -m 0.99
+   stripenn compute --cool ../hic/Vian_aB_30hrs.mcool::resolutions/5000 --out output_dir/ -k chr19 -m 0.98
 
 Here, the example mcool file contains Hi-C data of mouse activated B cell (`Vian et al., Cell, 2018 <https://www.sciencedirect.com/science/article/pii/S0092867418304045>`_).
 
