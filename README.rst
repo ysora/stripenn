@@ -106,7 +106,7 @@ Stripenn has three functions.
 * score
 * seeimage
 
-1) compute: It is main function of stripenn that detects stripes using image-processing method. There are several options in it.
+1) **compute**: It is main function of stripenn that detects stripes using image-processing method. There are several options in it.
 
 Options:
   --cool TEXT             Path to cool file  [required]
@@ -131,7 +131,7 @@ Options:
   -p, --pvalue FLOAT      P-value cutoff for stripe.  [default: 0.1]
   --help                  Show this message and exit.
 
-2) score: It calculates p-value and stripiness of given stripes on given 3D genome conformation data. It is useful to compare stripiness of given stripes in two datasets.
+2) **score**: It calculates p-value and stripiness of given stripes on given 3D genome conformation data. It is useful to compare stripiness of given stripes in two datasets.
 
 Options:
   --cool TEXT             Path to cool file  [required]
@@ -148,8 +148,9 @@ Options:
   -o, --out TEXT          Path to output file  [default: scores.out]
   --help                  Show this message and exit.
 
-3) seeimage: This function was included to help users choose proper maximum-pixel-value.
+3) **seeimage**: This function was included to help users choose proper maximum-pixel-value.
 
+Options:
   --cool TEXT           Path to cool file  [required]
   -p, --position TEXT   Genomic position (e.g., chr1:135010000-136000000)
                         [required]
