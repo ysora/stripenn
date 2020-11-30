@@ -11,6 +11,7 @@ import warnings
 import time
 import sys
 
+'''
 def argumentParser():
     parser = argparse.ArgumentParser(description='Stripenn')
     parser.add_argument("cool", help="Balanced cool file.")
@@ -43,8 +44,8 @@ def argumentParser():
     pcut = float(args.pvalue)
 
     return(cool, out, norm, chroms, canny, minH, maxW, maxpixel, core, pcut)
-
-def makeOutDir(outdir, maxpixel):
+'''
+def makeOutDir(outdir):
     last = outdir[-1]
     if last != '/':
         outdir += '/'
@@ -86,12 +87,15 @@ def makeOutDir(outdir, maxpixel):
     '''
 
     '''
-    cool = '/home/sora/Documents/
+    #cool = '/home/sora/Desktop/sora_alborz/sora/stripe/hic/4DNFISA93XFU.mcool::resolutions/10000'
+    cool = '/home/sora/Desktop/sora_alborz/sora/stripe/hic/vian_30hrs_test_10000.cool'
+    #cool = '/home/sora/Desktop/sora_alborz/sora/stripe/hic/Vian_aB_30hrs.mcool::resolutions/10000'
     cool = '/home/sora/Documents/stripe/hic_files/GSE82144_Kieffer-Kwon-2017-activated_B_cells_72_hours_WT_30.mcool::resolutions/10000'
-    chroms = 'all'
+    chroms = ['chr19']
     canny = 2.5
     minH=10
     maxW=8
+    norm='VC_SQRT'
     maxpixel=[0.99,0.98,0.97]
     core=6
     pcut=0.2
@@ -109,11 +113,39 @@ def makeOutDir(outdir, maxpixel):
     ld = np.subtract(amean,lefmean)
     rd = np.subtract(amean,rigmean)
     '''
-def main():
+def addlog(cool, out, norm, chrom, canny, minL, maxW, maxpixel, numcores, pvalue):
+    if out[-1] != '/':
+        out += '/'
+    outfile=open(out + "stripenn.log",'w')
+    outfile.write('cool: ' + cool + '\n')
+    outfile.write('out: ' + out + '\n')
+    outfile.write('norm: ' + norm + '\n')
+    outfile.write('chrom: ' + chrom + '\n')            
+    outfile.write('minL: ' + str(minL) + '\n')            
+    outfile.write('maxW: ' + str(maxW) + '\n')                
+    outfile.write('maxpixel: ' + maxpixel + '\n')
+    outfile.write('num_cores: ' + str(numcores) + '\n')
+    outfile.write('pvalue: ' + str(pvalue) + '\n')
+    
+    outfile.close()
+    
+    
+def compute(cool, out, norm, chrom, canny, minL, maxW, maxpixel, numcores, pvalue):
+    np.seterr(divide='ignore', invalid='ignore')
     t_start = time.time()
-    cool, out, norm, chroms, canny, minH, maxW, maxpixel, core, pcut = argumentParser()
+    if out[-1] != '/':
+        out += '/'
+    makeOutDir(out)
+    addlog(cool, out, norm, chrom, canny, minL, maxW, maxpixel, numcores, pvalue)
+    maxpixel = maxpixel.split(',')
+    maxpixel = list(map(float, maxpixel))
+    chroms = chrom.split(',')
+    minH = minL
+    core = numcores
+    pcut = pvalue
+    #cool, out, norm, chroms, canny, minH, maxW, maxpixel, core, pcut = argumentParser()
     print('Result will be stored in %s' % (out))
-    makeOutDir(out, maxpixel)
+
     Lib = cooler.Cooler(cool)
     PossibleNorm = Lib.bins().columns
     if norm == 'None':
@@ -181,5 +213,5 @@ def main():
     print('Check the result stored in %s' % (out))
     return 0
 
-if __name__ == "__main__":
-    main()
+#if __name__ == "__main__":
+#    main()
