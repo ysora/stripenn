@@ -1,0 +1,16 @@
+Metadata-Version: 2.1
+Name: stripenn
+Version: 1.1.16
+Summary: Image-processing based detection of architectural stripes from chromatic conformation data
+Home-page: https://github.com/ysora/stripenn
+Author: Sora Yoon
+Author-email: sora.yoon@pennmedicine.upenn.edu
+License: UNKNOWN
+Description: 
+        **Stripenn** is a command line interface python package developed for detection of atchitectural stripes from 3D genome conformation data. For installation and usage, please refer to the github page (https://github.com/ysora/stripenn)
+        
+Platform: UNKNOWN
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Description-Content-Type: text/markdown
