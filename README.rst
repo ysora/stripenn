@@ -59,7 +59,7 @@ Let's check if stripenn is working or not with a simple example.
 ::
 
    cd <Test_Directory> # Move to your test directory
-   wget wget https://github.com/ysora/stripenn/blob/master/data/Vian_aB_72hrs_chr19_res5kb_VCSQRT.cool?raw=true -O testdata.cool
+   wget https://github.com/ysora/stripenn/blob/master/data/Vian_aB_72hrs_chr19_res5kb_VCSQRT.cool?raw=true -O testdata.cool
    stripenn compute --cool testdata.cool --out output_dir/ -k chr19 -m 0.99
 
 Here, the example mcool file contains Hi-C data of mouse activated B cell (`Vian et al., Cell, 2018 <https://www.sciencedirect.com/science/article/pii/S0092867418304045>`_).
