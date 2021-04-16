@@ -59,7 +59,7 @@ Let's check if stripenn is working or not with a simple example. This example .c
 ::
 
    cd <Test_Directory> # Move to your test directory
-   wget https://www.dropbox.com/s/7vatwz9u4u839da/BL6.DPT.chr16.mcool?dl=0 -O test.mcool --no-check-certificate
+   wget https://www.dropbox.com/s/1bb2npvrzp3by5y/BL6.DPT.chr16.mcool?dl=0 -O test.mcool --no-check-certificate
    stripenn compute --cool test.mcool::resolutions/5000 --out output_dir/ -k chr16 -m 0.96,0.97,0.98
 
 *Tip*: For those whose computer has not enough memory (e.g., < 24GB), we provide slow version of Stripenn as follow:
