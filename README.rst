@@ -29,6 +29,10 @@ Introduction
 * **Architectural stripe**
     Architectural stripes are shown in the figure (highlighted in green border). Stripe is one of the distinctive features found from 3C data. It was first revealed from `Fudenberg et al., Cell Reports, 2016 <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4889513/>`_. As shown in the figure above, it has an anchor domain and contiguous regions are interacting with the anchor. It is known that stripes contains a large number of super-enhancers, and also it is a hopspot for DNA damage. However, more systematic analysis of this feature is needed, and that's why we developed Stripenn. :)
 
+Requirement
+############
+**Python 3.8 or higher version**
+
 Installation
 ############
 **Linux / Mac**
@@ -60,12 +64,12 @@ Let's check if stripenn is working or not with a simple example. This example .c
 
    cd <Test_Directory> # Move to your test directory
    wget https://www.dropbox.com/s/1bb2npvrzp3by5y/BL6.DPT.chr16.mcool?dl=0 -O test.mcool --no-check-certificate
-   stripenn compute --cool test.mcool::resolutions/5000 --out output_dir/ -k chr16 -m 0.96,0.97,0.98
+   stripenn compute --cool test.mcool::resolutions/5000 --out output_dir/ -k 16 -m 0.96,0.97,0.98
 
 *Tip*: For those whose computer has not enough memory (e.g., < 24GB), we provide slow version of Stripenn as follow:
 ::
 
-   stripenn compute --cool test.mcool::resolutions/5000 --out output_dir/ -k chr16 -m 0.96,0.97,0.98 -s
+   stripenn compute --cool test.mcool::resolutions/5000 --out output_dir/ -k 16 -m 0.96,0.97,0.98 -s
 
 In this example, stripes are searched from chromosome 16 of 5kb-resolution data for short running time.
 
