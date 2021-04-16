@@ -64,12 +64,12 @@ Let's check if stripenn is working or not with a simple example. This example .c
 
    cd <Test_Directory> # Move to your test directory
    wget https://www.dropbox.com/s/1bb2npvrzp3by5y/BL6.DPT.chr16.mcool?dl=0 -O test.mcool --no-check-certificate
-   stripenn compute --cool test.mcool::resolutions/5000 --out output_dir/ -k 16 -m 0.96,0.97,0.98
+   stripenn compute --cool test.mcool::resolutions/5000 --out output_dir/ -k 16 -m 0.95,0.96,0.97,0.98,0.99
 
 *Tip*: For those whose computer has not enough memory (e.g., < 24GB), we provide slow version of Stripenn as follow:
 ::
 
-   stripenn compute --cool test.mcool::resolutions/5000 --out output_dir/ -k 16 -m 0.96,0.97,0.98 -s
+   stripenn compute --cool test.mcool::resolutions/5000 --out output_dir/ -k 16 -m 0.95,0.96,0.97,0.98,0.99 -s
 
 In this example, stripes are searched from chromosome 16 of 5kb-resolution data for short running time.
 
@@ -129,14 +129,18 @@ Options:
 
   -c, --canny FLOAT       Canny edge detection parameter.  [default: 2.5]
   -l, --minL INTEGER      Minimum length of stripe.  [default: 10]
-  -w, --maxW INTEGER      Maximum width of stripe.  [default: 8] --> we recommend to adjust it to 16 using 5kb-resolution data
+  -w, --maxW INTEGER      Maximum width of stripe.  [default: 8]
   -m, --maxpixel TEXT     Percentiles of the contact frequency data to
                           saturate the image. Separated by comma  [default:
                           0.95,0.96,0.97,0.98,0.99]
 
   -n, --numcores INTEGER  The number of cores will be used.  [default: 40]
   -p, --pvalue FLOAT      P-value cutoff for stripe.  [default: 0.1]
-  --help                  Show this message and exit.
+  --mask TEXT             Column coordinates to be masked. e.g.,
+                          chr9:12345678-12345789  [default: 0]
+
+  -s BOOLEAN_FLAG         Use this if system memory is low.  [default: False]
+
 
 2) score: It calculates p-value and stripiness of given stripes on given 3D genome conformation data. It is useful to compare stripiness of given stripes in two datasets.
 
@@ -153,22 +157,23 @@ Options:
 
   -n, --numcores INTEGER  The number of cores will be used.  [default: 40]
   -o, --out TEXT          Path to output file  [default: scores.out]
-  --help                  Show this message and exit.
 
-3) seeimage: This function was included to help users choose proper maximum-pixel-value.
+3) seeimage: This function was included to help users choose proper maximum-pixel-value. It draws heatmap image of given position for given maximum pixel paramter.
 
-  --cool TEXT           Path to cool file  [required]
-  -p, --position TEXT   Genomic position (e.g., chr1:135010000-136000000)
-                        [required]
+Options:
+  --cool TEXT          Path to cool file  [required]
+  -p, --position TEXT  Genomic position (e.g., chr1:135010000-136000000)
+                       [required]
 
-  -m, --maxpixel FLOAT  Quantile for the pixel saturation. (e.g., 0.95)
-                        [default: 0.95]
+  -m, --maxpixel TEXT  Quantile for the pixel saturation. (e.g., 0.95)
+                       [default: 0.95,0.96,0.97,0.98,0.99]
 
-  -o, --out TEXT        Path to output directory  [default: ./heatmap.png]
-  --norm TEXT           Normalization method. It should be one of the column
-                        name of Cooler.bin(). Check it with
-                        Cooler.bins().columns (e.g., KR, VC, VC_SQRT)
-                        [default: KR]
+  -o, --out TEXT       Path to output directory  [default: ./heatmap.png]
+  --norm TEXT          Normalization method. It should be one of the column
+                       name of Cooler.bin(). Check it with
+                       Cooler.bins().columns (e.g., KR, VC, VC_SQRT)
+                       [default: KR]
 
-  --help                Show this message and exit.
+  -s                   Use if system memory is low.  [default: False]
+
 
