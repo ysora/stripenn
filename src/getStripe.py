@@ -479,7 +479,7 @@ class getStripe:
                         bgleft_down = np.column_stack((bgleft_down, bgleft_down_temp))
                         bgright_down = np.column_stack((bgright_down, bgright_down_temp))
 
-                        return bgleft_up, bgright_up, bgleft_down, bgright_down
+                return bgleft_up, bgright_up, bgleft_down, bgright_down
             # apply parallel.
             print('2. Constituting background ... \n')
             result = Parallel(n_jobs=self.core)(delayed(main_null_calc)(chr) for chr in tqdm(chromnames2))
