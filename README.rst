@@ -55,16 +55,19 @@ If you have any trouble with installation, please leave it on issue board.
 
 Quick start (Example run)
 #########################
-Let's check if stripenn is working or not with a simple example.
+Let's check if stripenn is working or not with a simple example. This example .cool file is Smc1-HiChIP of only chr16 of mouse T lymphocyte (`Fasolino et al., Immunity, 2020 <https://www.sciencedirect.com/science/article/pii/S1074761320300303>`_).
 ::
 
    cd <Test_Directory> # Move to your test directory
-   wget https://data.4dnucleome.org/files-processed/4DNFISA93XFU/@@download/4DNFISA93XFU.mcool -O Vian_aB_30hrs.mcool
-   stripenn compute --cool ../hic/Vian_aB_30hrs.mcool::resolutions/5000 --out output_dir/ -k chr19 -m 0.99
+   wget https://www.dropbox.com/s/7vatwz9u4u839da/BL6.DPT.chr16.mcool?dl=0 -O test.mcool --no-check-certificate
+   stripenn compute --cool test.mcool::resolutions/5000 --out output_dir/ -k chr16 -m 0.96,0.97,0.98
 
-Here, the example mcool file contains Hi-C data of mouse activated B cell (`Vian et al., Cell, 2018 <https://www.sciencedirect.com/science/article/pii/S0092867418304045>`_).
+*Tip*: For those whose computer has not enough memory (e.g., < 24GB), we provide slow version of Stripenn as follow:
+::
 
-Stripes are searched from chromosome 19 of 5kb-resolution data for short running time.
+   stripenn compute --cool test.mcool::resolutions/5000 --out output_dir/ -k chr16 -m 0.96,0.97,0.98 **-s**
+
+In this example, stripes are searched from chromosome 16 of 5kb-resolution data for short running time.
 
 **Output**
 ::
