@@ -113,7 +113,8 @@ Stripenn has three functions.
 * score
 * seeimage
 
-1) compute: It is main function of stripenn that detects stripes using image-processing method. There are several options in it.
+**compute**
+:It is main function of stripenn that detects stripes using image-processing method. There are several options in it.
 
 Options:
   --cool TEXT             Path to cool file  [required]
@@ -142,7 +143,8 @@ Options:
   -s BOOLEAN_FLAG         Use this if system memory is low.  [default: False]
 
 
-2) score: It calculates p-value and stripiness of given stripes on given 3D genome conformation data. It is useful to compare stripiness of given stripes in two datasets.
+**score**
+:It calculates p-value and stripiness of given stripes on given 3D genome conformation data. It is useful to compare stripiness of given stripes in two datasets.
 
 Options:
   --cool TEXT             Path to cool file  [required]
@@ -157,8 +159,11 @@ Options:
 
   -n, --numcores INTEGER  The number of cores will be used.  [default: 40]
   -o, --out TEXT          Path to output file  [default: scores.out]
+  
+   In the output, four columns (O_Mean_added, O_Sum_added, O/E_Mean_added and O/E_Total_added) are added in addition to the stripiness and P-value, and each represents (1) Mean of observed contact frequency, (2) Total sum of observed contact frequency, (3) Mean of observed/expected contact frequency and (4) total sum of observed/expected contact frequency within stripe. 
 
-3) seeimage: This function was included to help users choose proper maximum-pixel-value. It draws heatmap image of given position for given maximum pixel paramter.
+**seeimage**
+:This function was included to help users choose proper maximum-pixel-value. It draws heatmap image of given position for given maximum pixel paramter.
 
 Options:
   --cool TEXT          Path to cool file  [required]
@@ -168,7 +173,7 @@ Options:
   -m, --maxpixel TEXT  Quantile for the pixel saturation. (e.g., 0.95)
                        [default: 0.95,0.96,0.97,0.98,0.99]
 
-  -o, --out TEXT       Path to output directory  [default: ./heatmap.png]
+  -o, --out TEXT       Output prefix  [default: ./my_heatmap]
   --norm TEXT          Normalization method. It should be one of the column
                        name of Cooler.bin(). Check it with
                        Cooler.bins().columns (e.g., KR, VC, VC_SQRT)
