@@ -21,13 +21,13 @@ Contents
 
 Introduction
 ############
-**stripenn** is a command line interface python package developed for detection of atchitectural stripes from 3D genome conformation data. Then what are 3D genome conformation data and stripes?
+**stripenn** is a command line interface python package developed for detection of atchitectural stripes from chromatin conformation capture (3C) data. Then what are 3C data and stripes?
 
-* **3D genome conformation data**
-    The human DNA is about 2m in length and it is folded within small cells. However, the folding pattern is not random and this DNA 3D conformation is important in gene regulation. There are several sequencing techniques to see the genome-wide DNA interactions such as `Hi-C <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2858594/>`_ , `HiChIP <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5501173/>`_,  `PLAC-seq <https://www.nature.com/articles/cr2016137>`_ and `micro-C <https://www.cell.com/fulltext/S0092-8674(15)00638-8>`_. Currently, imaging-based methods are also developed to construct the spatial distance map of DNA ( `Su et al., 2020 <https://www.sciencedirect.com/science/article/pii/S0092867420309405>`_ ). From these data, special structures such as compartment, TAD and loops have been revealed.
+* **Chromatin conformation capture technique**
+    Basically, the chromatin conformation capture technique measures the frequency of DNA interactions. There are several sequencing techniques to see the genome-wide DNA interactions such as `Hi-C <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2858594/>`_ , `HiChIP <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5501173/>`_,  `PLAC-seq <https://www.nature.com/articles/cr2016137>`_ and `micro-C <https://www.cell.com/fulltext/S0092-8674(15)00638-8>`_. Currently, imaging-based methods are also developed to construct the spatial distance map of DNA ( `Su et al., 2020 <https://www.sciencedirect.com/science/article/pii/S0092867420309405>`_ ). These data have revealed that our genome is well-organized having special features such as compartment, TAD, loops and stripes.
 
 * **Architectural stripe**
-    Architectural stripes are one of the distinctive features found from 3D genome conformation data. It was first reported from `Vian et al., Cell, 2018 <https://www.sciencedirect.com/science/article/pii/S0092867418304045>`_. As shown in the figure above, it has anchor domain and contiguous regions are subsequently interacting with the anchor. It is known that stripes contains a large number of super-enhancers, and also it is a hopspot for DNA damage. However, more systematic analysis of this feature is needed, and that's why we developed Stripenn. :)
+    Architectural stripes are one of the distinctive features found from 3C data. It was first revealed from `Fudenberg et al., Cell Reports, 2016 <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4889513/>`_. As shown in the figure above, it has an anchor domain and contiguous regions are interacting with the anchor. It is known that stripes contains a large number of super-enhancers, and also it is a hopspot for DNA damage. However, more systematic analysis of this feature is needed, and that's why we developed Stripenn. :)
 
 Installation
 ############
