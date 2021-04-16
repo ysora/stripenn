@@ -65,7 +65,7 @@ Let's check if stripenn is working or not with a simple example. This example .c
 *Tip*: For those whose computer has not enough memory (e.g., < 24GB), we provide slow version of Stripenn as follow:
 ::
 
-   stripenn compute --cool test.mcool::resolutions/5000 --out output_dir/ -k chr16 -m 0.96,0.97,0.98 **-s**
+   stripenn compute --cool test.mcool::resolutions/5000 --out output_dir/ -k chr16 -m 0.96,0.97,0.98 -s
 
 In this example, stripes are searched from chromosome 16 of 5kb-resolution data for short running time.
 
