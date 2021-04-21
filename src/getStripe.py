@@ -743,70 +743,104 @@ class getStripe:
             return expec_matrix
 
         def iterate_idx(i,is_mask,exval):
-            np.errstate(divide='ignore', invalid='ignore')
-            xs = df['pos1'].iloc[i]
-            xe = df['pos2'].iloc[i]
-            ys = df['pos3'].iloc[i]
-            ye = df['pos4'].iloc[i]
-            #x_start_index = int((xs - 1) / self.resol)
-            x_start_index = int((xs) / self.resol) # to be deleted
-            x_end_index = int(xe / self.resol)
+            with np.errstate(divide='ignore', invalid='ignore'):
+                xs = df['pos1'].iloc[i]
+                xe = df['pos2'].iloc[i]
+                ys = df['pos3'].iloc[i]
+                ye = df['pos4'].iloc[i]
+                #x_start_index = int((xs - 1) / self.resol)
+                x_start_index = int((xs) / self.resol) # to be deleted
+                x_end_index = int(xe / self.resol)
 
-            #y_start_index = int((ys - 1) / self.resol)
-            y_start_index = int((ys) / self.resol)# to be deleted
-            y_end_index = int(ye / self.resol)
+                #y_start_index = int((ys - 1) / self.resol)
+                y_start_index = int((ys) / self.resol)# to be deleted
+                y_end_index = int(ye / self.resol)
 
-            leftmost = x_start_index - background_size
-            rightmost = x_end_index + background_size
-            if leftmost < 1:
-                leftmost = 1
-            if rightmost > chrom_bin_size:
-                rightmost = chrom_bin_size-1
+                leftmost = x_start_index - background_size
+                rightmost = x_end_index + background_size
+                if leftmost < 1:
+                    leftmost = 1
+                if rightmost > chrom_bin_size:
+                    rightmost = chrom_bin_size-1
 
-            x_coord = str(c) + ":" + str(int(xs)) + '-' + str(int(xe))
-            y_coord = str(c) + ":" + str(int(ys)) + '-' + str(int(ye))
-            center_obs = self.unbalLib.fetch(y_coord, x_coord)
-            center_exp = expecMatrix(exval, x_start_index, x_end_index, y_start_index, y_end_index)
-            center_exp += .00000001
-            center = np.divide(center_obs , center_exp)
+                x_coord = str(c) + ":" + str(int(xs)) + '-' + str(int(xe))
+                y_coord = str(c) + ":" + str(int(ys)) + '-' + str(int(ye))
+                center_obs = self.unbalLib.fetch(y_coord, x_coord)
+                center_exp = expecMatrix(exval, x_start_index, x_end_index, y_start_index, y_end_index)
+                center_exp += .00000001
+                center = np.divide(center_obs , center_exp)
 
-            x_coord = str(c) + ":" + str(int(leftmost * self.resol)) + '-' + str(int(x_start_index * self.resol))
-            left_obs = self.unbalLib.fetch(y_coord, x_coord)
-            left_exp = expecMatrix(exval, leftmost, x_start_index, y_start_index, y_end_index)
-            left_exp += .00000001
-            left = np.divide(left_obs, left_exp)
+                x_coord = str(c) + ":" + str(int(leftmost * self.resol)) + '-' + str(int(x_start_index * self.resol))
+                left_obs = self.unbalLib.fetch(y_coord, x_coord)
+                left_exp = expecMatrix(exval, leftmost, x_start_index, y_start_index, y_end_index)
+                left_exp += .00000001
+                left = np.divide(left_obs, left_exp)
 
-            x_coord = str(c) + ":" + str(int(x_end_index * self.resol)) + '-' + str(int(rightmost * self.resol))
-            right_obs = self.unbalLib.fetch(y_coord,x_coord)
-            right_exp = expecMatrix(exval, x_end_index + 1, rightmost +1, y_start_index, y_end_index)
-            right_exp += .00000001
-            right = np.divide(right_obs, right_exp)
+                x_coord = str(c) + ":" + str(int(x_end_index * self.resol)) + '-' + str(int(rightmost * self.resol))
+                right_obs = self.unbalLib.fetch(y_coord,x_coord)
+                right_exp = expecMatrix(exval, x_end_index + 1, rightmost +1, y_start_index, y_end_index)
+                right_exp += .00000001
+                right = np.divide(right_obs, right_exp)
 
-            if is_mask and mask_start > np.min(xs-50000, ys) and mask_start < np.max(xe+50000,ye):
-                center = masking(center, mask_x_start, mask_x_end, x_start_index, x_end_index, 1)
-                center = masking(center, mask_x_start, mask_x_end, y_start_index, y_end_index, 2)
-                left = masking(left, mask_x_start, mask_x_end, leftmost, x_start_index, 1)
-                left = masking(left, mask_x_start, mask_x_end, y_start_index, y_end_index, 2)
-                right = masking(right, mask_x_start, mask_x_end, x_end_index+1, rightmost, 1)
-                right = masking(right, mask_x_start, mask_x_end, y_start_index, y_end_index, 2)
+                if is_mask and mask_start > np.min([xs-50000, ys]) and mask_start < np.max([xe+50000,ye]):
+                    center = masking(center, mask_x_start, mask_x_end, x_start_index, x_end_index, 1)
+                    center = masking(center, mask_x_start, mask_x_end, y_start_index, y_end_index, 2)
+                    left = masking(left, mask_x_start, mask_x_end, leftmost, x_start_index, 1)
+                    left = masking(left, mask_x_start, mask_x_end, y_start_index, y_end_index, 2)
+                    right = masking(right, mask_x_start, mask_x_end, x_end_index+1, rightmost, 1)
+                    right = masking(right, mask_x_start, mask_x_end, y_start_index, y_end_index, 2)
 
-            centerm = np.mean(center, axis=1)
-            leftm = np.mean(left, axis=1)
-            rightm = np.mean(right, axis=1)
+                center_del = [x for x in range(center.shape[1]) if np.isnan(center[:,x]).all()]
+                left_del = [x for x in range(left.shape[1]) if np.isnan(left[:,x]).all()]
+                right_del = [x for x in range(right.shape[1]) if np.isnan(right[:,x]).all()]
 
-            centerTotal = np.sum(center[np.where(~np.isnan(center))[0]])
-            centerMean = np.mean(center[np.where(~np.isnan(center))[0]])
+                rowdel = []
+                if len(center_del)>0:
+                    center = np.delete(center,center_del,axis=1)
+                    if xs == ys:
+                        rowdel = rowdel + center_del
+                    else:
+                        rowdel = rowdel + [center.shape[0] - 1 - x for x in center_del]
+                if len(left_del)>0:
+                    left = np.delete(left, left_del,axis=1)
+                    if xs == ys:
+                        rowdel = rowdel + left_del
+                    else:
+                        rowdel = rowdel + [left.shape[0] - 1 - x for x in left_del]
+                if len(right_del)>0:
+                    right = np.delete(right, right_del,axis=1)
+                    if xs == ys:
+                        rowdel = rowdel + right_del
+                    else:
+                        rowdel = rowdel + [right.shape[0] - 1 - x for x in right_del]
 
-            g_xl = stats.elementwise_product_sum(K_xl, leftm, centerm)
-            g_xr = stats.elementwise_product_sum(K_xr, centerm, rightm)
-            g_y = stats.elementwise_product_sum(K_y, leftm, centerm, rightm)
-            g_x = np.minimum(g_xl, g_xr)
-            diff = [a - b for a, b in zip(g_x, g_y)]
-            diff = [x for x in diff if x >= 0 or x < 0]
-            avgdiff = np.mean(diff)
-            g = np.nanmedian(centerm) * avgdiff
-            g = float(g)
-            return i,g,centerMean, centerTotal
+                rowdel = np.unique(rowdel)
+                if len(rowdel)>0:
+                    center = np.delete(center, rowdel, axis=0)
+                    left = np.delete(left, rowdel, axis=0)
+                    right = np.delete(right, rowdel, axis=0)
+
+                center = nantozero(center)
+                left = nantozero(left)
+                right = nantozero(right)
+
+                centerm = np.mean(center, axis=1)
+                leftm = np.mean(left, axis=1)
+                rightm = np.mean(right, axis=1)
+
+                centerTotal = np.sum(center[np.where(~np.isnan(center))[0]])
+                centerMean = np.mean(center[np.where(~np.isnan(center))[0]])
+
+                g_xl = stats.elementwise_product_sum(K_xl, leftm, centerm)
+                g_xr = stats.elementwise_product_sum(K_xr, centerm, rightm)
+                g_y = stats.elementwise_product_sum(K_y, leftm, centerm, rightm)
+                g_x = np.minimum(g_xl, g_xr)
+                diff = [a - b for a, b in zip(g_x, g_y)]
+                diff = [x for x in diff if x >= 0 or x < 0]
+                avgdiff = np.mean(diff)
+                g = np.nanmedian(centerm) * avgdiff
+                g = float(g)
+                return i,g,centerMean, centerTotal
 
         # Scoring
         ### Sobel-like operators

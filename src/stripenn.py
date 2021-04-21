@@ -11,40 +11,6 @@ import warnings
 import time
 import sys
 
-'''
-def argumentParser():
-    parser = argparse.ArgumentParser(description='Stripenn')
-    parser.add_argument("cool", help="Balanced cool file.")
-    parser.add_argument('out', help="Path to output directory.")
-    parser.add_argument('--norm', help="Normalization method. It should be one of the column name of Cooler.bin(). Check it with Cooler.bins().columns (e.g., KR, VC, VC_SQRT)", default='KR')
-    parser.add_argument("-k", '--chrom', help="Set of chromosomes. e.g., 'chr1,chr2,chr3', 'all' will generate stripes from all chromosomes", default='all')
-    parser.add_argument("-c","--canny", help="Canny edge detection parameter.", default=2.5)
-    parser.add_argument('-l','--minL', help="Minimum length of stripe.",default=10)
-    parser.add_argument('-w','--maxW', help="Maximum width of stripe.",default=8)
-    parser.add_argument('-m','--maxpixel', help="Percentiles of the contact frequency data to saturate the image. Separated by comma. Default = 0.95,0.96,0.97,0.98,0.99", default='0.95,0.96,0.97,0.98,0.99')
-    num_cores = multiprocessing.cpu_count()
-    parser.add_argument('-n','--numcores', help='The number of cores will be used.', default = num_cores)
-    parser.add_argument('-p', '--pvalue', help='P-value cutoff for stripe.', default = 0.2)
-    args = parser.parse_args()
-
-    cool = args.cool
-    out = args.out
-    if out[-1] != '/':
-        out += '/'
-    norm = args.norm
-    chroms = args.chrom
-    chroms = chroms.split(',')
-    canny = float(args.canny)
-    minH = int(args.minL)
-    maxW = int(args.maxW)
-    maxpixel = args.maxpixel
-    maxpixel = maxpixel.split(',')
-    maxpixel = list(map(float, maxpixel))
-    core = int(args.numcores)
-    pcut = float(args.pvalue)
-
-    return(cool, out, norm, chroms, canny, minH, maxW, maxpixel, core, pcut)
-'''
 def makeOutDir(outdir):
     last = outdir[-1]
     if last != '/':
@@ -76,43 +42,8 @@ def makeOutDir(outdir):
         except OSError as e:
             if e.errno != errno.EEXIST:
                 raise
-    '''
-    imagedir = os.path.join(outdir, 'images')
-    os.makedirs(imagedir, mode=0o777, exist_ok=False)
 
-    for mp in maxpixel:
-        top = round(100*(1-mp),2)
-        dirname = os.path.join(imagedir, 'top'+ str(top) + '%')
-        os.makedirs(dirname, mode=0o777, exist_ok=False)
-    '''
 
-    '''
-    #cool = '/home/sora/Desktop/sora_alborz/sora/stripe/hic/4DNFISA93XFU.mcool::resolutions/10000'
-    cool = '/home/sora/Desktop/sora_alborz/sora/stripe/hic/vian_30hrs_test_10000.cool'
-    #cool = '/home/sora/Desktop/sora_alborz/sora/stripe/hic/Vian_aB_30hrs.mcool::resolutions/10000'
-    cool = '/home/sora/Documents/stripe/hic_files/GSE82144_Kieffer-Kwon-2017-activated_B_cells_72_hours_WT_30.mcool::resolutions/10000'
-    chroms = ['chr19']
-    canny = 2.5
-    minH=10
-    maxW=8
-    norm='VC_SQRT'
-    maxpixel=[0.99,0.98,0.97]
-    core=6
-    pcut=0.2
-    result_table = pd.read_csv('/home/sora/Documents/stripe/Zebra/Zebra_unfiltered_processed_connected_to_anchor.txt',header=None,sep='\t')
-    result_table = result_table.rename(columns={0: "chr", 1: 'pos1', 2: 'pos2',3: 'chr2',4: 'pos3', 5: 'pos4'})
-    '''
-
-    '''
-    a = unbalLib.fetch('chr16:96150001-96220000','chr16:95330001-96220000')
-    amean = np.mean(a,axis=0)
-    lef = unbalLib.fetch('chr16:96100001-96150000','chr16:95330001-96220000')
-    lefmean = np.mean(lef,axis=0)
-    rig = unbalLib.fetch('chr16:96220001-96270000','chr16:95330001-96220000')
-    rigmean = np.mean(rig,axis=0)
-    ld = np.subtract(amean,lefmean)
-    rd = np.subtract(amean,rigmean)
-    '''
 def addlog(cool, out, norm, chrom, canny, minL, maxW, maxpixel, numcores, pvalue, mask):
     if out[-1] != '/':
         out += '/'
