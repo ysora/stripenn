@@ -52,7 +52,9 @@ class getStripe:
             mean_list = []
 
             for i in range(0,401):
-                val = np.mean(np.diag(self.unbalLib[r_start:r_end,r_start:r_end], i))
+                print(i)
+                with np.errstate(divide='ignore', invalid='ignore'):
+                    val = np.nanmean(np.diag(self.unbalLib[r_start:r_end,r_start:r_end], i))
                 mean_list.append(val)
             res[CHROM] = mean_list
         return res
@@ -176,33 +178,34 @@ class getStripe:
     def mpmean(self):
 
         def calc(n):
-            pixels_mean = [0 for x in range(framesize)]
-            counts_mean = [0 for x in range(framesize)]
-            start = self.resol * n * framesize + 1
-            end = self.resol * (n + 1) * framesize
-            end2 = self.resol * (n + 2) * framesize
-            if end > chrsize:
-                end = chrsize
-            if end2 > chrsize:
-                end2 = chrsize
-            rows = str(chr) + ":" + str(start) + "-" + str(end)
-            cols = str(chr) + ":" + str(start) + "-" + str(end2)
-            cfm = self.unbalLib.fetch(rows, cols)
-            cfm_rows = cfm.shape[0]
-            cfm_cols = cfm.shape[1]
-            cfm_max = np.max(cfm)
+            with np.errstate(divide='ignore', invalid='ignore'):
+                pixels_mean = [0 for x in range(framesize)]
+                counts_mean = [0 for x in range(framesize)]
+                start = self.resol * n * framesize + 1
+                end = self.resol * (n + 1) * framesize
+                end2 = self.resol * (n + 2) * framesize
+                if end > chrsize:
+                    end = chrsize
+                if end2 > chrsize:
+                    end2 = chrsize
+                rows = str(chr) + ":" + str(start) + "-" + str(end)
+                cols = str(chr) + ":" + str(start) + "-" + str(end2)
+                cfm = self.unbalLib.fetch(rows, cols)
+                cfm_rows = cfm.shape[0]
+                cfm_cols = cfm.shape[1]
+                cfm_max = np.max(cfm)
 
-            for i in range(cfm_rows):
-                for j in range(min(framesize, cfm_cols)):
-                    if i + j >= cfm_cols:
-                        continue
-                    else:
-                        count = cfm[i, i + j]
-                        if np.isnan(count):
-                            count = 0
-                        pixels_mean[j] += count
-                        counts_mean[j] += 1
-            del cfm
+                for i in range(cfm_rows):
+                    for j in range(min(framesize, cfm_cols)):
+                        if i + j >= cfm_cols:
+                            continue
+                        else:
+                            count = cfm[i, i + j]
+                            if np.isnan(count):
+                                count = 0
+                            pixels_mean[j] += count
+                            counts_mean[j] += 1
+                del cfm
             return pixels_mean, counts_mean
 
        #meantable = [[] for x in range(len(self.chromnames))]
@@ -269,7 +272,7 @@ class getStripe:
 
                 return poolsum
 
-            print('1. Calculating the number of available columns ... \n')
+            print('3.1. Calculating the number of available columns ...')
             n_available_col = Parallel(n_jobs=self.core)(delayed(available_cols)(chr) for chr in tqdm(chromnames2))
 
             samplesize = (n_available_col/ np.sum(n_available_col)) * 1000
@@ -297,13 +300,12 @@ class getStripe:
                     itera = min(chrsize/self.resol/500, 25)
                     itera = int(itera)
                     unitsize = np.floor(chrsize/self.resol/itera)
-                    unitsize = np.uint64(unitsize)
+                    unitsize = int(unitsize)
 
                     bgleft_up = np.zeros((400, 0))
                     bgright_up = np.zeros((400, 0))
                     bgleft_down = np.zeros((400, 0))
                     bgright_down = np.zeros((400, 0))
-
                     n_pool = []
 
                     for it in range(itera):
@@ -319,7 +321,6 @@ class getStripe:
                         if test_region_start0 <= 1:
                             test_region_start0 = 1
                         test_region_start0 = int(test_region_start0)
-
                         position1 = str(chr) + ":" + str(test_region_start1) + "-" + str(test_region_end1)
                         position2 = str(chr) + ":" + str(test_region_start0) + "-" + str(test_region_end2)
                         mat = self.unbalLib.fetch(position1, position2)
@@ -330,6 +331,8 @@ class getStripe:
                         zeroindex = np.where(matsum == 0)
                         pool = [x for x in list(range(nrow)) if x not in zeroindex[0].tolist()]
                         pool = [x for x in pool if x > 20 and x < (unitsize - 20)]
+                        if it == 0:
+                            pool = [x for x in pool if x > 410 and x < mat.shape[1]]
                         n_pool.append(len(pool))
                         if len(pool) == 0:
                             del mat
@@ -341,7 +344,6 @@ class getStripe:
                             tableft_down = np.zeros((400, len(pool)))
                             tabcenter_down = np.zeros((400, len(pool)))
                             tabright_down = np.zeros((400, len(pool)))
-
                             for i in range(len(pool)):
                                 x = randval[i]
                                 for j in range(0,400):
@@ -365,6 +367,7 @@ class getStripe:
                                     tabcenter_down[j, i] = np.mean(mat[(x - background_up):(x + background_down), (y_down - background_up):(y_down + background_down)])
                                     tabright_down[j, i] = np.mean(mat[(x + background_down):(x + background_down + background_size), (y_down - background_up):(y_down + background_down)])
 
+
                             bgleft_up_temp = np.subtract(tabcenter_up, tableft_up)
                             bgright_up_temp = np.subtract(tabcenter_up, tabright_up)
                             bgleft_up = np.column_stack((bgleft_up, bgleft_up_temp))
@@ -383,17 +386,12 @@ class getStripe:
                             tableft_down = np.zeros((400, sss))
                             tabcenter_down = np.zeros((400, sss))
                             tabright_down = np.zeros((400, sss))
-
                             for i in range(sss):
                                 x = randval[i]
                                 for j in range(0, 400):
                                     y_down = x + j
                                     y_up = x - j
-                                   # det = np.random.choice([0,1])
-                                   # if det == 0:
-                                   #     y = x + j
-                                   # else:
-                                   #     y = x - j
+
                                     if it > 0:
                                         y_up = y_up + 400
                                         y_down = y_down + 400
@@ -421,7 +419,6 @@ class getStripe:
                         test_region_start1 = int(unitsize * self.resol * rich+1)
                         test_region_start0 = int(test_region_start1 - (400*self.resol))
                         test_region_end1 = int(unitsize * self.resol * (rich+1))
-                        test_region_start2 = int(unitsize * self.resol * rich+1)
                         test_region_end2 = int(unitsize * self.resol * (rich+1)+(400*self.resol))
                         if test_region_end2 > chrsize:
                             test_region_end2 = chrsize-1
@@ -461,12 +458,12 @@ class getStripe:
                                 if it > 0:
                                     y_up = y_up + 400
                                     y_down = y_down+400
-                                    tableft_up[j, i] = np.mean(mat[(x - background_up - background_size):(x - background_up), (y_up - background_up):(y_up + background_down)])
-                                    tabcenter_up[j, i] = np.mean(mat[(x - background_up):(x + background_down), (y_up - background_up):(y_up + background_down)])
-                                    tabright_up[j, i] = np.mean(mat[(x + background_down):(x + background_down + background_size), (y_up - background_up):(y_up + background_down)])
-                                    tableft_down[j, i] = np.mean(mat[(x - background_up - background_size):(x - background_up), (y_down - background_up):(y_down + background_down)])
-                                    tabcenter_down[j, i] = np.mean(mat[(x - background_up):(x + background_down), (y_down - background_up):(y_down + background_down)])
-                                    tabright_down[j, i] = np.mean(mat[(x + background_down):(x + background_down + background_size), (y_down - background_up):(y_down + background_down)])
+                                tableft_up[j, i] = np.mean(mat[(x - background_up - background_size):(x - background_up), (y_up - background_up):(y_up + background_down)])
+                                tabcenter_up[j, i] = np.mean(mat[(x - background_up):(x + background_down), (y_up - background_up):(y_up + background_down)])
+                                tabright_up[j, i] = np.mean(mat[(x + background_down):(x + background_down + background_size), (y_up - background_up):(y_up + background_down)])
+                                tableft_down[j, i] = np.mean(mat[(x - background_up - background_size):(x - background_up), (y_down - background_up):(y_down + background_down)])
+                                tabcenter_down[j, i] = np.mean(mat[(x - background_up):(x + background_down), (y_down - background_up):(y_down + background_down)])
+                                tabright_down[j, i] = np.mean(mat[(x + background_down):(x + background_down + background_size), (y_down - background_up):(y_down + background_down)])
 
                         bgleft_up_temp = np.subtract(tabcenter_up, tableft_up)
                         bgright_up_temp = np.subtract(tabcenter_up, tabright_up)
@@ -481,7 +478,7 @@ class getStripe:
 
                 return bgleft_up, bgright_up, bgleft_down, bgright_down
             # apply parallel.
-            print('2. Constituting background ... \n')
+            print('3.2. Constituting background ...')
             result = Parallel(n_jobs=self.core)(delayed(main_null_calc)(chr) for chr in tqdm(chromnames2))
             bgleft_up = np.zeros((400,0))
             bgright_up = np.zeros((400,0))
@@ -760,7 +757,7 @@ class getStripe:
                 rightmost = x_end_index + background_size
                 if leftmost < 1:
                     leftmost = 1
-                if rightmost > chrom_bin_size:
+                if rightmost >= chrom_bin_size:
                     rightmost = chrom_bin_size-1
 
                 x_coord = str(c) + ":" + str(int(xs)) + '-' + str(int(xe))

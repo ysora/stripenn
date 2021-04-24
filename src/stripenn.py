@@ -119,17 +119,17 @@ def compute(cool, out, norm, chrom, canny, minL, maxW, maxpixel, numcores, pvalu
     unbalLib = Lib.matrix(balance=norm)
     resol = Lib.binsize
     obj = getStripe.getStripe(unbalLib, resol, minH, maxW, canny, all_chromnames, chromnames, all_chromsizes, chromsizes,core)
-    print('#######################################\nMaximum pixel value calculation ... \n#######################################')
+    print('1. Maximum pixel value calculation ...')
     if slow:
-        print("#####...Slowly estimating Maximum pixel values...#####")
+        print("1.1 Slowly estimating Maximum pixel values...")
         MP = getStripe.getStripe.getQuantile_slow(obj,Lib,chromnames,maxpixel)
     else:
         MP = getStripe.getStripe.getQuantile_original(obj,Lib,chromnames,maxpixel)
-    print('#######################################\nExpected value calculation ...\n#######################################\n')
+    print('2. Expected value calculation ...')
     EV = getStripe.getStripe.mpmean(obj)
-    print('#######################################\nBackground distribution estimation ...\n#######################################\n')
+    print('3. Background distribution estimation ...')
     bgleft_up, bgright_up, bgleft_down, bgright_down = getStripe.getStripe.nulldist(obj)
-    print('#################################################\nFinding candidate stripes from each chromosome ...\n#################################################\n')
+    print('4. Finding candidate stripes from each chromosome ...')
     result_table = pd.DataFrame(columns=['chr', 'pos1', 'pos2', 'chr2', 'pos3', 'pos4', 'length', 'width', 'total', 'Mean',
                                    'maxpixel', 'num', 'start', 'end', 'x', 'y', 'h', 'w', 'medpixel','pvalue'])
     for i in range(len(maxpixel)):
@@ -142,7 +142,7 @@ def compute(cool, out, norm, chrom, canny, minL, maxW, maxpixel, numcores, pvalu
 
     result_table = getStripe.getStripe.RemoveRedundant(obj,df=result_table,by='pvalue')
 
-    print('##########################\nStripiness calculation ...\n##########################\n')
+    print('5. Stripiness calculation ...')
     s = obj.scoringstripes(result_table, EV, mask)
     s = s[0]
     result_table = result_table.drop(columns=['total', 'num', 'start', 'end', 'x', 'y', 'h', 'w', 'medpixel'])
@@ -151,8 +151,8 @@ def compute(cool, out, norm, chrom, canny, minL, maxW, maxpixel, numcores, pvalu
     res_filter = res_filter.sort_values(by=['Stripiness'], ascending=False)
 
 
-    res1 = out + 'result_unfiltered.txt'
-    res2 = out + 'result_filtered.txt'
+    res1 = out + 'result_unfiltered.tsv'
+    res2 = out + 'result_filtered.tsv'
 
     result_table.to_csv(res1,sep="\t",header=True,index=False)
     res_filter.to_csv(res2,sep="\t",header=True,index=False)
