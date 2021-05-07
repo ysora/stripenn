@@ -1,0 +1,10 @@
+cool: /mnt/data0/sora/stripe/hic/Vian_aB_30hrs.mcool::resolutions/5000
+out: /mnt/data0/sora/stripe/stripenn_out/Vian_aB_30hrs_5kb_VCSQRT3/
+norm: VC_SQRT
+chrom: all
+canny: 2.5
+minL: 10
+maxW: 16
+maxpixel: 0.97,0.975,0.98,0.985,0.99
+num_cores: 8
+pvalue: 0.1

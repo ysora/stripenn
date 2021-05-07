@@ -1,0 +1,10 @@
+cool: /mnt/data0/sora/stripe/hic/GSE82144_Kieffer-Kwon-2017-activated_B_cells_72_hours_WT_30.mcool::resolutions/10000
+out: /mnt/data0/sora/stripe/stripenn_out/Vian_ab_72h_210128/
+norm: None
+chrom: all
+canny: 2.5
+minL: 10
+maxW: 8
+maxpixel: 0.97,0.98,0.99
+num_cores: 8
+pvalue: 0.1
