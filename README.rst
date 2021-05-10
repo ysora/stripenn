@@ -44,7 +44,7 @@ Open terminal and type following:
 
 If pip is not installed, install pip first: `pip installation <https://pip.pypa.io/en/stable/installing/>`_
 
-When pip is not working, replace it with 'pip3'
+When pip is not working, replace it with 'pip3'. Installation may take several minutes.
 
 **Windows**
 
@@ -59,7 +59,7 @@ If you have any trouble with installation, please leave it on issue board.
 
 Quick start (Example run)
 #########################
-Let's check if stripenn is working or not with a simple example. This example .cool file is Smc1-HiChIP of only chr16 of mouse T lymphocyte (`Fasolino et al., Immunity, 2020 <https://www.sciencedirect.com/science/article/pii/S1074761320300303>`_).
+Let's check if stripenn is working or not with a simple example which might take less than 5 minutes. This example .cool file is Smc1-HiChIP of only chr16 of mouse T lymphocyte (`Fasolino et al., Immunity, 2020 <https://www.sciencedirect.com/science/article/pii/S1074761320300303>`_).
 ::
 
    cd <Test_Directory> # Move to your test directory
