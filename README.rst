@@ -9,8 +9,8 @@ Architectural stripe detection from 3D genome conformation data
    :target: https://pypi.org/project/stripenn/
 
 .. image:: https://github.com/ysora/stripenn/blob/main/image/example_call.png
-   :height: 200px
-   :width: 200px
+   :height: 500px
+   :width: 500px
 
 Contents
 ########
