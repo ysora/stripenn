@@ -21,7 +21,7 @@ Contents
 
 Introduction
 ############
-**stripenn** is a command line interface python package developed for detection of atchitectural stripes from chromatin conformation capture (3C) data. Then what are 3C data and stripes?
+**Stripenn** is a command line interface python package developed for detection of atchitectural stripes from chromatin conformation capture (3C) data. Then what are 3C data and stripes?
 
 * **Chromatin conformation capture technique**
     Basically, the chromatin conformation capture technique measures the frequency of DNA interactions. There are several sequencing techniques to see the genome-wide DNA interactions such as `Hi-C <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2858594/>`_ , `HiChIP <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5501173/>`_,  `PLAC-seq <https://www.nature.com/articles/cr2016137>`_ and `micro-C <https://www.cell.com/fulltext/S0092-8674(15)00638-8>`_. Currently, imaging-based methods are also developed to construct the spatial distance map of DNA ( `Su et al., 2020 <https://www.sciencedirect.com/science/article/pii/S0092867420309405>`_ ). These data have revealed that our genome is highly organized having special features such as compartment, TAD, loops and stripes.
