@@ -44,7 +44,7 @@ def makeOutDir(outdir):
                 raise
 
 
-def addlog(cool, out, norm, chrom, canny, minL, maxW, maxpixel, numcores, pvalue, mask):
+def addlog(cool, out, norm, chrom, canny, minL, maxW, maxpixel, numcores, pvalue, mask, bfilter):
     if out[-1] != '/':
         out += '/'
     outfile=open(out + "stripenn.log",'w')
@@ -59,16 +59,17 @@ def addlog(cool, out, norm, chrom, canny, minL, maxW, maxpixel, numcores, pvalue
     outfile.write('num_cores: ' + str(numcores) + '\n')
     outfile.write('pvalue: ' + str(pvalue) + '\n')
     outfile.write('mask: ' + str(mask) + '\n')
+    outfile.write('blur filter: ' + str(bfilter) + '\n')
     outfile.close()
     
     
-def compute(cool, out, norm, chrom, canny, minL, maxW, maxpixel, numcores, pvalue, mask, slow):
+def compute(cool, out, norm, chrom, canny, minL, maxW, maxpixel, numcores, pvalue, mask, slow, bfilter):
     np.seterr(divide='ignore', invalid='ignore')
     t_start = time.time()
     if out[-1] != '/':
         out += '/'
     makeOutDir(out)
-    addlog(cool, out, norm, chrom, canny, minL, maxW, maxpixel, numcores, pvalue, mask)
+    addlog(cool, out, norm, chrom, canny, minL, maxW, maxpixel, numcores, pvalue, mask, bfilter)
     maxpixel = maxpixel.split(',')
     maxpixel = list(map(float, maxpixel))
     chroms = chrom.split(',')
@@ -118,7 +119,7 @@ def compute(cool, out, norm, chrom, canny, minL, maxW, maxpixel, numcores, pvalu
 
     unbalLib = Lib.matrix(balance=norm)
     resol = Lib.binsize
-    obj = getStripe.getStripe(unbalLib, resol, minH, maxW, canny, all_chromnames, chromnames, all_chromsizes, chromsizes,core)
+    obj = getStripe.getStripe(unbalLib, resol, minH, maxW, canny, all_chromnames, chromnames, all_chromsizes, chromsizes,core, bfilter)
     print('1. Maximum pixel value calculation ...')
     if slow:
         print("1.1 Slowly estimating Maximum pixel values...")
