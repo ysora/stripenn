@@ -1,5 +1,5 @@
 ========
-STRIPENN
+STRIPENN (ver 1.1.65)
 ========
 --------------------------------------------------------------------
 Architectural stripe detection from 3D genome conformation data
