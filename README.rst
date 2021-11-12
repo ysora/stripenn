@@ -24,10 +24,10 @@ Introduction
 **Stripenn** is a command line interface python package developed for detection of atchitectural stripes from chromatin conformation capture (3C) data. Then what are 3C data and stripes?
 
 * **Chromatin conformation capture technique**
-    Basically, the chromatin conformation capture technique measures the frequency of DNA interactions. There are several sequencing techniques to see the genome-wide DNA interactions such as `Hi-C <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2858594/>`_ , `HiChIP <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5501173/>`_,  `PLAC-seq <https://www.nature.com/articles/cr2016137>`_ and `micro-C <https://www.cell.com/fulltext/S0092-8674(15)00638-8>`_. Currently, imaging-based methods are also developed to construct the spatial distance map of DNA ( `Su et al., 2020 <https://www.sciencedirect.com/science/article/pii/S0092867420309405>`_ ). These data have revealed that our genome is highly organized having special features such as compartment, TAD, loops and stripes.
+    Basically, the chromatin conformation capture technique measures the frequency of DNA interactions. There are several sequencing techniques to see the genome-wide DNA interactions such as `Hi-C <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2858594/>`_ , `HiChIP <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5501173/>`_,  `PLAC-seq <https://www.nature.com/articles/cr2016137>`_ and `micro-C <https://www.cell.com/fulltext/S0092-8674(15)00638-8>`_. Currently, imaging-based methods are also developed to construct the spatial distance map of DNA interaction ( `Su et al., 2020 <https://www.sciencedirect.com/science/article/pii/S0092867420309405>`_ ). These data have revealed that our genome is highly organized including special features such as compartment, TAD, loops and stripes.
 
 * **Architectural stripe**
-    Architectural stripes are shown in the figure (highlighted in green border). Stripe is one of the distinctive features found from 3C data. It was first predicted by `Fudenberg et al., Cell Reports, 2016 <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4889513/>`_. As shown in the figure above, it is a linear pattern where an anchor forms interaction with contiguous genomic region. It is known that stripes contains a large number of super-enhancers, and also it is a hopspot for DNA damage. To address more characteristics of stripes, we need accurate stripe caller and that's why Stripenn has been developed.
+    Architectural stripes are shown in the figure above (highlighted in green border). Stripe is one of the distinctive features found from 3C data. It was first predicted by `Fudenberg et al., Cell Reports, 2016 <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4889513/>`_. As shown in the figure above, it is a linear pattern where an anchor forms interaction with contiguous genomic region. It is known that stripes are enriched with super-enhancers, and also it is a hopspot for DNA damage. To address more characteristics of stripes, we need accurate stripe caller and that's why we've developed Stripenn.
 
 Requirement
 ############
@@ -128,7 +128,7 @@ Options:
                           will generate stripes from all chromosomes
                           [default: all]
 
-  -c, --canny FLOAT       Canny edge detection parameter.  [default: 2.5]
+  -c, --canny FLOAT       Canny edge detection parameter.  [default: 2.0]
   -l, --minL INTEGER      Minimum length of stripe.  [default: 10]
   -w, --maxW INTEGER      Maximum width of stripe.  [default: 8]
   -m, --maxpixel TEXT     Percentiles of the contact frequency data to
@@ -141,6 +141,7 @@ Options:
                           chr9:12345678-12345789  [default: 0]
 
   -s BOOLEAN_FLAG         Use this if system memory is low.  [default: False]
+  -b --bfilter INTEGER    Kernel size of Mean filter.  [default: 3]
 
 
 **score**
