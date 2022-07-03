@@ -72,7 +72,7 @@ def seeimage(cool, position, maxpixel, norm, out, slow):
 
     unbalLib = Lib.matrix(balance=norm)
     resol = Lib._info['bin-size']
-    obj = getStripe.getStripe(unbalLib, resol, 10, 8, 2.5, all_chromnames, chromnames, all_chromsizes, chromsizes,2)
+    obj = getStripe.getStripe(unbalLib, resol, 10, 8, 2.5, all_chromnames, chromnames, all_chromsizes, chromsizes,2,3)
 
     if slow:
         print("#####...Slowly estimating Maximum pixel values...#####")
