@@ -35,6 +35,7 @@ def seeimag(
         out: str = typer.Option('./heatmap.png', "--out", "-o", help="Path to output directory"),
         norm: str = typer.Option('KR',"--norm",help="Normalization method. It should be one of the column name of Cooler.bin(). Check it with Cooler.bins().columns (e.g., KR, VC, VC_SQRT)"),
         slow: bool= typer.Option(False,'-s' , help='Use if system memory is low.')
+        
 ):
     """ Draws heatmap image of given position and color saturation parameter (maxpixel).
     """

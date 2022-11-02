@@ -5,6 +5,8 @@ from src import getStripe
 
 def getScore(cool, coordinates,norm,numcores,out,mask='0'):
     # Just open without header
+    bfilter = 1
+    print('Run score function')
     table = pd.read_csv(coordinates,header=None,sep='\t')
     # test
     el = table.iloc[0]
@@ -32,9 +34,9 @@ def getScore(cool, coordinates,norm,numcores,out,mask='0'):
         norm = False
 
     all_chromnames = Lib.chromnames
-    all_chromnames = [x for x in all_chromnames if x != "Y"]
+    all_chromnames = [x for x in all_chromnames if x != "Y" and "JH" not in x and "RANDOM" not in x]
     #all_chromsizes = Lib.chromsizes
-    all_chromsizes = [Lib.chromsizes[i] for i in range(len(Lib.chromsizes)) if Lib.chromnames[i]!="Y"]
+    all_chromsizes = [Lib.chromsizes[i] for i in range(len(Lib.chromsizes)) if Lib.chromnames[i]!="Y" and "JH" not in Lib.chromnames[i] and "RANDOM" not in Lib.chromnames[i]]
     all_chromsizes = np.array(all_chromsizes)
     chrom_remain_idx = np.where(all_chromsizes > 1000000)[0]
     all_chromnames = [all_chromnames[i] for i in chrom_remain_idx]
@@ -43,7 +45,7 @@ def getScore(cool, coordinates,norm,numcores,out,mask='0'):
     chromsizes = all_chromsizes
     unbalLib = Lib.matrix(balance=norm)
     resol = Lib._info['bin-size']
-    obj = getStripe.getStripe(unbalLib, resol, 10, 8, 2.5, all_chromnames, chromnames, all_chromsizes, chromsizes,core)
+    obj = getStripe.getStripe(unbalLib, resol, 10, 8, 2.5, all_chromnames, chromnames, all_chromsizes, chromsizes,core,1)
     EV = getStripe.getStripe.mpmean(obj)
     bgleft_up, bgright_up, bgleft_down, bgright_down = getStripe.getStripe.nulldist(obj)
     pval = getStripe.getStripe.pvalue(obj, bgleft_up, bgright_up, bgleft_down, bgright_down, table)

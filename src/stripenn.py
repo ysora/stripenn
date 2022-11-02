@@ -95,7 +95,7 @@ def compute(cool, out, norm, chrom, canny, minL, maxW, maxpixel, numcores, pvalu
 
     all_chromnames = Lib.chromnames
     all_chromsizes = Lib.chromsizes
-    chrom_remain_idx = [i for i in range(len(all_chromnames)) if 'JH5' not in all_chromnames[i] and 'GL4' not in all_chromnames[i] and all_chromnames[i] != 'M' and all_chromnames[i] != "chrM" and all_chromnames[i] != "Y" and all_chromnames[i] != "chrY"]
+    chrom_remain_idx = [i for i in range(len(all_chromnames)) if 'JH5' not in all_chromnames[i] and 'GL4' not in all_chromnames[i] and 'RANDOM' not in all_chromnames[i] and all_chromnames[i] != 'M' and all_chromnames[i] != "chrM" and all_chromnames[i] != "Y" and all_chromnames[i] != "chrY"]
     all_chromnames = [all_chromnames[i] for i in chrom_remain_idx]
     all_chromsizes = all_chromsizes[chrom_remain_idx]
     chromnames = all_chromnames

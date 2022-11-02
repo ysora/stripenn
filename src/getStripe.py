@@ -555,8 +555,8 @@ class getStripe:
                     leftmost = 1
                 if rightmost > chrLen:
                     rightmost = chrLen
-                cd1 = chr + ":" + str(leftmost) + "-" + str(rightmost)
-                cd2 = chr + ":" + str(pos3) + "-" + str(pos4)
+                cd1 = chr + ":" + str(int(float(leftmost))) + "-" + str(int(float(rightmost)))
+                cd2 = chr + ":" + str(int(float(pos3))) + "-" + str(int(float(pos4)))
                 mat = self.unbalLib.fetch(cd2, cd1)
                 mat_center = mat[:, background_size:(-1*background_size)]
                 mat_left = mat[:, :background_size]
@@ -575,10 +575,10 @@ class getStripe:
 
                 pvalues = []
 
-                x1 = (pos1 - 1) / self.resol
-                x2 = pos2 / self.resol
-                y1 = (pos3 - 1) / self.resol
-                y2 = pos4 / self.resol
+                x1 = int((pos1 - 1) / self.resol)
+                x2 = int(pos2 / self.resol)
+                y1 = int((pos3 - 1) / self.resol)
+                y2 = int(pos4 / self.resol)
 
                 for j in range(len(center)):
                     if x1 == y1:  # downward stripe
@@ -774,10 +774,10 @@ class getStripe:
                 is_mask = ( mask_chr == c )
 
             idx = np.where(df['chr'] == c)[0].tolist()
-            chrom_idx = self.chromnames.index(c)
+            chrom_idx = self.chromnames.index(str(c))
             chrom_bin_size = np.ceil(self.chromsizes[chrom_idx] / self.resol)
             chrom_bin_size = int(chrom_bin_size)
-            exval = expecVal[c]
+            exval = expecVal[str(c)]
 
             result = Parallel(n_jobs=self.core)(delayed(iterate_idx)(i,is_mask,exval) for i in tqdm(idx))
             for r in range(len(result)):

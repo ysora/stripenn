@@ -16,7 +16,7 @@ from joblib import Parallel, delayed
 from tqdm import tqdm
 
 class getStripe:
-    def __init__(self, unbalLib, resol, minH, maxW, canny, all_chromnames, chromnames, all_chromsizes, chromsizes, core):
+    def __init__(self, unbalLib, resol, minH, maxW, canny, all_chromnames, chromnames, all_chromsizes, chromsizes, core, bfilter):
         self.unbalLib = unbalLib
         self.resol = resol
         self.minH = minH
@@ -27,6 +27,7 @@ class getStripe:
         self.chromnames = chromnames
         self.chromsizes = chromsizes
         self.core = core
+        self.bfilter = bfilter
         self.chromnames2sizes={}
         for i in range(len(self.all_chromnames)):
             self.chromnames2sizes[self.all_chromnames[i]] = self.all_chromsizes[i]
@@ -52,7 +53,8 @@ class getStripe:
             mean_list = []
 
             for i in range(0,401):
-                val = np.mean(np.diag(self.unbalLib[r_start:r_end,r_start:r_end], i))
+                with np.errstate(divide='ignore', invalid='ignore'):
+                    val = np.nanmean(np.diag(self.unbalLib[r_start:r_end,r_start:r_end], i))
                 mean_list.append(val)
             res[CHROM] = mean_list
         return res
@@ -176,33 +178,34 @@ class getStripe:
     def mpmean(self):
 
         def calc(n):
-            pixels_mean = [0 for x in range(framesize)]
-            counts_mean = [0 for x in range(framesize)]
-            start = self.resol * n * framesize + 1
-            end = self.resol * (n + 1) * framesize
-            end2 = self.resol * (n + 2) * framesize
-            if end > chrsize:
-                end = chrsize
-            if end2 > chrsize:
-                end2 = chrsize
-            rows = str(chr) + ":" + str(start) + "-" + str(end)
-            cols = str(chr) + ":" + str(start) + "-" + str(end2)
-            cfm = self.unbalLib.fetch(rows, cols)
-            cfm_rows = cfm.shape[0]
-            cfm_cols = cfm.shape[1]
-            cfm_max = np.max(cfm)
+            with np.errstate(divide='ignore', invalid='ignore'):
+                pixels_mean = [0 for x in range(framesize)]
+                counts_mean = [0 for x in range(framesize)]
+                start = self.resol * n * framesize + 1
+                end = self.resol * (n + 1) * framesize
+                end2 = self.resol * (n + 2) * framesize
+                if end > chrsize:
+                    end = chrsize
+                if end2 > chrsize:
+                    end2 = chrsize
+                rows = str(chr) + ":" + str(start) + "-" + str(end)
+                cols = str(chr) + ":" + str(start) + "-" + str(end2)
+                cfm = self.unbalLib.fetch(rows, cols)
+                cfm_rows = cfm.shape[0]
+                cfm_cols = cfm.shape[1]
+                cfm_max = np.max(cfm)
 
-            for i in range(cfm_rows):
-                for j in range(min(framesize, cfm_cols)):
-                    if i + j >= cfm_cols:
-                        continue
-                    else:
-                        count = cfm[i, i + j]
-                        if np.isnan(count):
-                            count = 0
-                        pixels_mean[j] += count
-                        counts_mean[j] += 1
-            del cfm
+                for i in range(cfm_rows):
+                    for j in range(min(framesize, cfm_cols)):
+                        if i + j >= cfm_cols:
+                            continue
+                        else:
+                            count = cfm[i, i + j]
+                            if np.isnan(count):
+                                count = 0
+                            pixels_mean[j] += count
+                            counts_mean[j] += 1
+                del cfm
             return pixels_mean, counts_mean
 
        #meantable = [[] for x in range(len(self.chromnames))]
@@ -269,7 +272,7 @@ class getStripe:
 
                 return poolsum
 
-            print('1. Calculating the number of available columns ... \n')
+            print('3.1. Calculating the number of available columns ...')
             n_available_col = Parallel(n_jobs=self.core)(delayed(available_cols)(chr) for chr in tqdm(chromnames2))
 
             samplesize = (n_available_col/ np.sum(n_available_col)) * 1000
@@ -297,13 +300,12 @@ class getStripe:
                     itera = min(chrsize/self.resol/500, 25)
                     itera = int(itera)
                     unitsize = np.floor(chrsize/self.resol/itera)
-                    unitsize = np.uint64(unitsize)
+                    unitsize = int(unitsize)
 
                     bgleft_up = np.zeros((400, 0))
                     bgright_up = np.zeros((400, 0))
                     bgleft_down = np.zeros((400, 0))
                     bgright_down = np.zeros((400, 0))
-
                     n_pool = []
 
                     for it in range(itera):
@@ -319,7 +321,6 @@ class getStripe:
                         if test_region_start0 <= 1:
                             test_region_start0 = 1
                         test_region_start0 = int(test_region_start0)
-
                         position1 = str(chr) + ":" + str(test_region_start1) + "-" + str(test_region_end1)
                         position2 = str(chr) + ":" + str(test_region_start0) + "-" + str(test_region_end2)
                         mat = self.unbalLib.fetch(position1, position2)
@@ -330,6 +331,8 @@ class getStripe:
                         zeroindex = np.where(matsum == 0)
                         pool = [x for x in list(range(nrow)) if x not in zeroindex[0].tolist()]
                         pool = [x for x in pool if x > 20 and x < (unitsize - 20)]
+                        if it == 0:
+                            pool = [x for x in pool if x > 410 and x < mat.shape[1]]
                         n_pool.append(len(pool))
                         if len(pool) == 0:
                             del mat
@@ -341,7 +344,6 @@ class getStripe:
                             tableft_down = np.zeros((400, len(pool)))
                             tabcenter_down = np.zeros((400, len(pool)))
                             tabright_down = np.zeros((400, len(pool)))
-
                             for i in range(len(pool)):
                                 x = randval[i]
                                 for j in range(0,400):
@@ -365,6 +367,7 @@ class getStripe:
                                     tabcenter_down[j, i] = np.mean(mat[(x - background_up):(x + background_down), (y_down - background_up):(y_down + background_down)])
                                     tabright_down[j, i] = np.mean(mat[(x + background_down):(x + background_down + background_size), (y_down - background_up):(y_down + background_down)])
 
+
                             bgleft_up_temp = np.subtract(tabcenter_up, tableft_up)
                             bgright_up_temp = np.subtract(tabcenter_up, tabright_up)
                             bgleft_up = np.column_stack((bgleft_up, bgleft_up_temp))
@@ -383,17 +386,12 @@ class getStripe:
                             tableft_down = np.zeros((400, sss))
                             tabcenter_down = np.zeros((400, sss))
                             tabright_down = np.zeros((400, sss))
-
                             for i in range(sss):
                                 x = randval[i]
                                 for j in range(0, 400):
                                     y_down = x + j
                                     y_up = x - j
-                                   # det = np.random.choice([0,1])
-                                   # if det == 0:
-                                   #     y = x + j
-                                   # else:
-                                   #     y = x - j
+
                                     if it > 0:
                                         y_up = y_up + 400
                                         y_down = y_down + 400
@@ -421,7 +419,6 @@ class getStripe:
                         test_region_start1 = int(unitsize * self.resol * rich+1)
                         test_region_start0 = int(test_region_start1 - (400*self.resol))
                         test_region_end1 = int(unitsize * self.resol * (rich+1))
-                        test_region_start2 = int(unitsize * self.resol * rich+1)
                         test_region_end2 = int(unitsize * self.resol * (rich+1)+(400*self.resol))
                         if test_region_end2 > chrsize:
                             test_region_end2 = chrsize-1
@@ -461,12 +458,12 @@ class getStripe:
                                 if it > 0:
                                     y_up = y_up + 400
                                     y_down = y_down+400
-                                    tableft_up[j, i] = np.mean(mat[(x - background_up - background_size):(x - background_up), (y_up - background_up):(y_up + background_down)])
-                                    tabcenter_up[j, i] = np.mean(mat[(x - background_up):(x + background_down), (y_up - background_up):(y_up + background_down)])
-                                    tabright_up[j, i] = np.mean(mat[(x + background_down):(x + background_down + background_size), (y_up - background_up):(y_up + background_down)])
-                                    tableft_down[j, i] = np.mean(mat[(x - background_up - background_size):(x - background_up), (y_down - background_up):(y_down + background_down)])
-                                    tabcenter_down[j, i] = np.mean(mat[(x - background_up):(x + background_down), (y_down - background_up):(y_down + background_down)])
-                                    tabright_down[j, i] = np.mean(mat[(x + background_down):(x + background_down + background_size), (y_down - background_up):(y_down + background_down)])
+                                tableft_up[j, i] = np.mean(mat[(x - background_up - background_size):(x - background_up), (y_up - background_up):(y_up + background_down)])
+                                tabcenter_up[j, i] = np.mean(mat[(x - background_up):(x + background_down), (y_up - background_up):(y_up + background_down)])
+                                tabright_up[j, i] = np.mean(mat[(x + background_down):(x + background_down + background_size), (y_up - background_up):(y_up + background_down)])
+                                tableft_down[j, i] = np.mean(mat[(x - background_up - background_size):(x - background_up), (y_down - background_up):(y_down + background_down)])
+                                tabcenter_down[j, i] = np.mean(mat[(x - background_up):(x + background_down), (y_down - background_up):(y_down + background_down)])
+                                tabright_down[j, i] = np.mean(mat[(x + background_down):(x + background_down + background_size), (y_down - background_up):(y_down + background_down)])
 
                         bgleft_up_temp = np.subtract(tabcenter_up, tableft_up)
                         bgright_up_temp = np.subtract(tabcenter_up, tabright_up)
@@ -479,9 +476,9 @@ class getStripe:
                         bgleft_down = np.column_stack((bgleft_down, bgleft_down_temp))
                         bgright_down = np.column_stack((bgright_down, bgright_down_temp))
 
-                        return bgleft_up, bgright_up, bgleft_down, bgright_down
+                return bgleft_up, bgright_up, bgleft_down, bgright_down
             # apply parallel.
-            print('2. Constituting background ... \n')
+            print('3.2. Constituting background ...')
             result = Parallel(n_jobs=self.core)(delayed(main_null_calc)(chr) for chr in tqdm(chromnames2))
             bgleft_up = np.zeros((400,0))
             bgright_up = np.zeros((400,0))
@@ -543,150 +540,69 @@ class getStripe:
         np.seterr(divide='ignore', invalid='ignore')
         PVAL = []
         dfsize = len(df)
-        for i in range(dfsize):
-            chr = df['chr'].iloc[i]
-            chr = str(chr)
-            chrLen = self.chromnames2sizes[chr]
-            pos1 = df['pos1'].iloc[i]
-            pos2 = df['pos2'].iloc[i]
-            pos3 = df['pos3'].iloc[i]
-            pos4 = df['pos4'].iloc[i]
-            leftmost = pos1 - background_size * self.resol
-            rightmost = pos2 + background_size * self.resol
-            if leftmost < 1:
-                leftmost = 1
-            if rightmost > chrLen:
-                rightmost = chrLen
-            cd1 = chr + ":" + str(leftmost) + "-" + str(rightmost)
-            cd2 = chr + ":" + str(pos3) + "-" + str(pos4)
-            mat = self.unbalLib.fetch(cd2, cd1)
-            mat_center = mat[:, background_size:(-1*background_size)]
-            mat_left = mat[:, :background_size]
-            mat_right = mat[:, (-1*background_size):]
+        with np.errstate(divide='ignore',invalid='ignore'):
+            for i in range(dfsize):
+                chr = df['chr'].iloc[i]
+                chr = str(chr)
+                chrLen = self.chromnames2sizes[chr]
+                pos1 = df['pos1'].iloc[i]
+                pos2 = df['pos2'].iloc[i]
+                pos3 = df['pos3'].iloc[i]
+                pos4 = df['pos4'].iloc[i]
+                leftmost = pos1 - background_size * self.resol
+                rightmost = pos2 + background_size * self.resol
+                if leftmost < 1:
+                    leftmost = 1
+                if rightmost > chrLen:
+                    rightmost = chrLen
+                cd1 = chr + ":" + str(int(float(leftmost))) + "-" + str(int(float(rightmost)))
+                cd2 = chr + ":" + str(int(float(pos3))) + "-" + str(int(float(pos4)))
+                mat = self.unbalLib.fetch(cd2, cd1)
+                mat_center = mat[:, background_size:(-1*background_size)]
+                mat_left = mat[:, :background_size]
+                mat_right = mat[:, (-1*background_size):]
 
-            mat_center = nantozero(mat_center)
-            mat_left = nantozero(mat_left)
-            mat_right = nantozero(mat_right)
+                mat_center = nantozero(mat_center)
+                mat_left = nantozero(mat_left)
+                mat_right = nantozero(mat_right)
 
-            center = np.mean(mat_center, axis=1)
-            left = np.mean(mat_left, axis=1)
-            right = np.mean(mat_right, axis=1)
+                center = np.mean(mat_center, axis=1)
+                left = np.mean(mat_left, axis=1)
+                right = np.mean(mat_right, axis=1)
 
-            left_diff = np.subtract(center, left)
-            right_diff = np.subtract(center, right)
+                left_diff = np.subtract(center, left)
+                right_diff = np.subtract(center, right)
 
-            pvalues = []
+                pvalues = []
 
-            x1 = (pos1 - 1) / self.resol
-            x2 = pos2 / self.resol
-            y1 = (pos3 - 1) / self.resol
-            y2 = pos4 / self.resol
+                x1 = int((pos1 - 1) / self.resol)
+                x2 = int(pos2 / self.resol)
+                y1 = int((pos3 - 1) / self.resol)
+                y2 = int(pos4 / self.resol)
 
-            for j in range(len(center)):
-                if x1 == y1:  # downward stripe
-                    difference = j
-                    if difference >= 400:
-                        difference = 399
-                    difference = int(difference)
-                    bleft = bgleft_down[difference,:]
-                    bright = bgright_down[difference,:]
-                elif x2 == y2:  # upward stripe
-                    difference = y2 - y1 - j - 1
-                    if difference >= 400:
-                        difference = 399
-                    difference = int(difference)
-                    bleft = bgleft_up[difference,:]
-                    bright = bgright_up[difference,:]
+                for j in range(len(center)):
+                    if x1 == y1:  # downward stripe
+                        difference = j
+                        if difference >= 400:
+                            difference = 399
+                        difference = int(difference)
+                        bleft = bgleft_down[difference,:]
+                        bright = bgright_down[difference,:]
+                    elif x2 == y2:  # upward stripe
+                        difference = y2 - y1 - j - 1
+                        if difference >= 400:
+                            difference = 399
+                        difference = int(difference)
+                        bleft = bgleft_up[difference,:]
+                        bright = bgright_up[difference,:]
 
-                p1 = len(np.where(bleft >= left_diff[j])[0]) / len(bleft[np.where(~np.isnan(bleft))])
-                p2 = len(np.where(bright >= right_diff[j])[0]) / len(bright[np.where(~np.isnan(bright))])
-                pval = max(p1, p2)
-                if pval == 0:
-                    pval = 1/len(bleft)
-                pvalues.append(pval)
-            PVAL.append(np.median(pvalues))
-        return PVAL
-
-    def pvalue_test(self, bgleft, bgright, df):
-        np.seterr(divide='ignore', invalid='ignore')
-        PVAL = []
-        dfsize = len(df)
-        for i in range(dfsize):
-            chr = df['chr'].iloc[i]
-            pos1 = df['pos1'].iloc[i]
-            pos2 = df['pos2'].iloc[i]
-            pos3 = df['pos3'].iloc[i]
-            pos4 = df['pos4'].iloc[i]
-            medpixel = df['medpixel'].iloc[i]
-            cd1 = chr + ":" + str(pos1 - 5 * self.resol) + "-" + str(pos2 + 5 * self.resol)
-            cd2 = chr + ":" + str(pos3) + "-" + str(pos4)
-            mat = self.unbalLib.fetch(cd2, cd1)
-            mat_center = mat[:, 5:-5]
-            mat_left = mat[:, :5]
-            mat_right = mat[:, -5:]
-
-            mat_center = nantozero(mat_center)
-            mat_left = nantozero(mat_left)
-            mat_right = nantozero(mat_right)
-
-            center = np.mean(mat_center, axis=1)
-            left = np.mean(mat_left, axis=1)
-            right = np.mean(mat_right, axis=1)
-
-            center = signal.medfilt(center, 3)
-            left = signal.medfilt(left, 3)
-            right = signal.medfilt(right, 3)
-
-            left_diff = np.subtract(center, left)
-            right_diff = np.subtract(center, right)
-
-            pcrit = []
-            pvalues = []
-            nomore = 0
-
-            x1 = (pos1 - 1) / self.resol
-            x2 = pos2 / self.resol
-            y1 = (pos3 - 1) / self.resol
-            y2 = pos4 / self.resol
-
-            for j in range(len(center)):
-                if x1 == y1:  # downward stripe
-                    difference = j
-                elif x2 == y2:  # upward stripe
-                    difference = y2 - y1 - j
-                difference = int(difference)
-                bleft = bgleft[difference, :]
-                bright = bgright[difference, :]
-                p1 = len(np.where(bleft >= left_diff[j])[0]) / len(bleft)
-                p2 = len(np.where(bright >= right_diff[j])[0]) / len(bright)
-                pval = max(p1, p2)
-                if pval == 0:
-                    pval = 0.001
-                pvalues.append(pval)
-            pvalues_flip = pvalues[::-1]
-            pvalue_smooth = signal.medfilt(pvalues, 3)
-            pvalues_flip_smooth = signal.medfilt(pvalues_flip, 3)
-            N = len(pvalue_smooth)
-            for j in range(len(center)):
-                if x1 == y1:
-                    k = j
-                elif x2 == y2:
-                    k = N - j - 1
-                if center[k] > medpixel and pvalue_smooth[k] < 0.5:
-                    pcrit.append(1)
-                elif center[k] > medpixel and pvalue_smooth[k] >= 0.5:
-                    if nomore != 0:
-                        pcrit.append(0)
-                    else:
-                        pcrit.append(1)
-                elif center[k] < medpixel:
-                    if nomore == 0:
-                        nomore = 1
-                    pcrit.append(0)
-
-            zeros = [i for i in range(len(pcrit)) if pcrit[i] == 0]
-
-            PVAL.append(np.median(pvalues))
+                    p1 = len(np.where(bleft >= left_diff[j])[0]) / len(bleft[np.where(~np.isnan(bleft))])
+                    p2 = len(np.where(bright >= right_diff[j])[0]) / len(bright[np.where(~np.isnan(bright))])
+                    pval = max(p1, p2)
+                    if pval == 0:
+                        pval = 1/len(bleft)
+                    pvalues.append(pval)
+                PVAL.append(np.median(pvalues))
         return PVAL
 
     def scoringstripes(self, df, expecVal, mask='0'):
@@ -743,70 +659,104 @@ class getStripe:
             return expec_matrix
 
         def iterate_idx(i,is_mask,exval):
-            np.errstate(divide='ignore', invalid='ignore')
-            xs = df['pos1'].iloc[i]
-            xe = df['pos2'].iloc[i]
-            ys = df['pos3'].iloc[i]
-            ye = df['pos4'].iloc[i]
-            #x_start_index = int((xs - 1) / self.resol)
-            x_start_index = int((xs) / self.resol) # to be deleted
-            x_end_index = int(xe / self.resol)
+            with np.errstate(divide='ignore', invalid='ignore'):
+                xs = df['pos1'].iloc[i]
+                xe = df['pos2'].iloc[i]
+                ys = df['pos3'].iloc[i]
+                ye = df['pos4'].iloc[i]
+                #x_start_index = int((xs - 1) / self.resol)
+                x_start_index = int((xs) / self.resol) # to be deleted
+                x_end_index = int(xe / self.resol)
 
-            #y_start_index = int((ys - 1) / self.resol)
-            y_start_index = int((ys) / self.resol)# to be deleted
-            y_end_index = int(ye / self.resol)
+                #y_start_index = int((ys - 1) / self.resol)
+                y_start_index = int((ys) / self.resol)# to be deleted
+                y_end_index = int(ye / self.resol)
 
-            leftmost = x_start_index - background_size
-            rightmost = x_end_index + background_size
-            if leftmost < 1:
-                leftmost = 1
-            if rightmost > chrom_bin_size:
-                rightmost = chrom_bin_size-1
+                leftmost = x_start_index - background_size
+                rightmost = x_end_index + background_size
+                if leftmost < 1:
+                    leftmost = 1
+                if rightmost >= chrom_bin_size:
+                    rightmost = chrom_bin_size-1
 
-            x_coord = str(c) + ":" + str(int(xs)) + '-' + str(int(xe))
-            y_coord = str(c) + ":" + str(int(ys)) + '-' + str(int(ye))
-            center_obs = self.unbalLib.fetch(y_coord, x_coord)
-            center_exp = expecMatrix(exval, x_start_index, x_end_index, y_start_index, y_end_index)
-            center_exp += .00000001
-            center = np.divide(center_obs , center_exp)
+                x_coord = str(c) + ":" + str(int(xs)) + '-' + str(int(xe))
+                y_coord = str(c) + ":" + str(int(ys)) + '-' + str(int(ye))
+                center_obs = self.unbalLib.fetch(y_coord, x_coord)
+                center_exp = expecMatrix(exval, x_start_index, x_end_index, y_start_index, y_end_index)
+                center_exp += .00000001
+                center = np.divide(center_obs , center_exp)
 
-            x_coord = str(c) + ":" + str(int(leftmost * self.resol)) + '-' + str(int(x_start_index * self.resol))
-            left_obs = self.unbalLib.fetch(y_coord, x_coord)
-            left_exp = expecMatrix(exval, leftmost, x_start_index, y_start_index, y_end_index)
-            left_exp += .00000001
-            left = np.divide(left_obs, left_exp)
+                x_coord = str(c) + ":" + str(int(leftmost * self.resol)) + '-' + str(int(x_start_index * self.resol))
+                left_obs = self.unbalLib.fetch(y_coord, x_coord)
+                left_exp = expecMatrix(exval, leftmost, x_start_index, y_start_index, y_end_index)
+                left_exp += .00000001
+                left = np.divide(left_obs, left_exp)
 
-            x_coord = str(c) + ":" + str(int(x_end_index * self.resol)) + '-' + str(int(rightmost * self.resol))
-            right_obs = self.unbalLib.fetch(y_coord,x_coord)
-            right_exp = expecMatrix(exval, x_end_index + 1, rightmost +1, y_start_index, y_end_index)
-            right_exp += .00000001
-            right = np.divide(right_obs, right_exp)
+                x_coord = str(c) + ":" + str(int(x_end_index * self.resol)) + '-' + str(int(rightmost * self.resol))
+                right_obs = self.unbalLib.fetch(y_coord,x_coord)
+                right_exp = expecMatrix(exval, x_end_index + 1, rightmost +1, y_start_index, y_end_index)
+                right_exp += .00000001
+                right = np.divide(right_obs, right_exp)
 
-            if is_mask and mask_start > np.min(xs-50000, ys) and mask_start < np.max(xe+50000,ye):
-                center = masking(center, mask_x_start, mask_x_end, x_start_index, x_end_index, 1)
-                center = masking(center, mask_x_start, mask_x_end, y_start_index, y_end_index, 2)
-                left = masking(left, mask_x_start, mask_x_end, leftmost, x_start_index, 1)
-                left = masking(left, mask_x_start, mask_x_end, y_start_index, y_end_index, 2)
-                right = masking(right, mask_x_start, mask_x_end, x_end_index+1, rightmost, 1)
-                right = masking(right, mask_x_start, mask_x_end, y_start_index, y_end_index, 2)
+                if is_mask and mask_start > np.min([xs-50000, ys]) and mask_start < np.max([xe+50000,ye]):
+                    center = masking(center, mask_x_start, mask_x_end, x_start_index, x_end_index, 1)
+                    center = masking(center, mask_x_start, mask_x_end, y_start_index, y_end_index, 2)
+                    left = masking(left, mask_x_start, mask_x_end, leftmost, x_start_index, 1)
+                    left = masking(left, mask_x_start, mask_x_end, y_start_index, y_end_index, 2)
+                    right = masking(right, mask_x_start, mask_x_end, x_end_index+1, rightmost, 1)
+                    right = masking(right, mask_x_start, mask_x_end, y_start_index, y_end_index, 2)
 
-            centerm = np.mean(center, axis=1)
-            leftm = np.mean(left, axis=1)
-            rightm = np.mean(right, axis=1)
+                center_del = [x for x in range(center.shape[1]) if np.isnan(center[:,x]).all()]
+                left_del = [x for x in range(left.shape[1]) if np.isnan(left[:,x]).all()]
+                right_del = [x for x in range(right.shape[1]) if np.isnan(right[:,x]).all()]
 
-            centerTotal = np.sum(center[np.where(~np.isnan(center))[0]])
-            centerMean = np.mean(center[np.where(~np.isnan(center))[0]])
+                rowdel = []
+                if len(center_del)>0:
+                    center = np.delete(center,center_del,axis=1)
+                    if xs == ys:
+                        rowdel = rowdel + center_del
+                    else:
+                        rowdel = rowdel + [center.shape[0] - 1 - x for x in center_del]
+                if len(left_del)>0:
+                    left = np.delete(left, left_del,axis=1)
+                    if xs == ys:
+                        rowdel = rowdel + left_del
+                    else:
+                        rowdel = rowdel + [left.shape[0] - 1 - x for x in left_del]
+                if len(right_del)>0:
+                    right = np.delete(right, right_del,axis=1)
+                    if xs == ys:
+                        rowdel = rowdel + right_del
+                    else:
+                        rowdel = rowdel + [right.shape[0] - 1 - x for x in right_del]
 
-            g_xl = stats.elementwise_product_sum(K_xl, leftm, centerm)
-            g_xr = stats.elementwise_product_sum(K_xr, centerm, rightm)
-            g_y = stats.elementwise_product_sum(K_y, leftm, centerm, rightm)
-            g_x = np.minimum(g_xl, g_xr)
-            diff = [a - b for a, b in zip(g_x, g_y)]
-            diff = [x for x in diff if x >= 0 or x < 0]
-            avgdiff = np.mean(diff)
-            g = np.nanmedian(centerm) * avgdiff
-            g = float(g)
-            return i,g,centerMean, centerTotal
+                rowdel = np.unique(rowdel)
+                if len(rowdel)>0:
+                    center = np.delete(center, rowdel, axis=0)
+                    left = np.delete(left, rowdel, axis=0)
+                    right = np.delete(right, rowdel, axis=0)
+
+                center = nantozero(center)
+                left = nantozero(left)
+                right = nantozero(right)
+
+                centerm = np.mean(center, axis=1)
+                leftm = np.mean(left, axis=1)
+                rightm = np.mean(right, axis=1)
+
+                centerTotal = np.sum(center[np.where(~np.isnan(center))[0]])
+                centerMean = np.mean(center[np.where(~np.isnan(center))[0]])
+
+                g_xl = stats.elementwise_product_sum(K_xl, leftm, centerm)
+                g_xr = stats.elementwise_product_sum(K_xr, centerm, rightm)
+                g_y = stats.elementwise_product_sum(K_y, leftm, centerm, rightm)
+                g_x = np.minimum(g_xl, g_xr)
+                diff = [a - b for a, b in zip(g_x, g_y)]
+                diff = [x for x in diff if x >= 0 or x < 0]
+                avgdiff = np.mean(diff)
+                g = np.nanmedian(centerm) * avgdiff
+                g = float(g)
+                return i,g,centerMean, centerTotal
 
         # Scoring
         ### Sobel-like operators
@@ -822,12 +772,12 @@ class getStripe:
             is_mask = False
             if mask!='0':
                 is_mask = ( mask_chr == c )
-            print(c)
+
             idx = np.where(df['chr'] == c)[0].tolist()
-            chrom_idx = self.chromnames.index(c)
+            chrom_idx = self.chromnames.index(str(c))
             chrom_bin_size = np.ceil(self.chromsizes[chrom_idx] / self.resol)
             chrom_bin_size = int(chrom_bin_size)
-            exval = expecVal[c]
+            exval = expecVal[str(c)]
 
             result = Parallel(n_jobs=self.core)(delayed(iterate_idx)(i,is_mask,exval) for i in tqdm(idx))
             for r in range(len(result)):
@@ -840,6 +790,7 @@ class getStripe:
     def extract(self, MP, index, perc , bgleft_up, bgright_up, bgleft_down, bgright_down):
         with np.errstate(divide='ignore', invalid='ignore'):
             def search_frame(idx):
+                #print(idx)
                 start = idx * 200 - 100
                 end = (idx + 1) * 200 + 99
                 if end >= rowsize:
@@ -863,6 +814,7 @@ class getStripe:
                 nonzero_idx = np.where(colsum != 0)  # data type: tuple
                 nonzero_idx = nonzero_idx[0]
                 framesize = len(nonzero_idx)
+                #print(framesize)
                 if framesize > 10:
                     D = D[np.ix_(nonzero_idx, nonzero_idx)]
                     start_array = [start_array[s] for s in nonzero_idx]
@@ -942,200 +894,212 @@ class getStripe:
             # plt.subplot(111),plt.imshow(img),plt.title('original'), plt.show()
 
             for b in np.arange(0.5, 1.01, 0.1):  # b: brightness parameter
-                test_column = []
-                end_points = []
-                start_points = []
-                updown = []  # up = 1, down = 2
-                adj = ImageProcessing.imBrightness3D(img, In=([0.0, 0.0, 0.0], [1.0, b, b]),
-                                                     Out=([0.0, 0.0, 0.0], [1.0, 1.0, 1.0]))
-                # plt.subplot(111), plt.imshow(adj), plt.title('Brightened'), plt.show()
-                kernel = np.ones((3, 3)) / 9
-                blur = cv.filter2D(adj, -1, kernel)
-                blur = np.clip(blur, a_min=0, a_max=1)
-                # plt.subplot(111), plt.imshow(blur), plt.title('Blurry'), plt.show()
-                gray = cv.cvtColor(np.float32(blur), cv.COLOR_RGB2GRAY)
-                # gray = np.uint8(gray*255)
-                # edges = ImageProcessing.Canny(gray, threshold = 0.3)
-                edges = feature.canny(gray, sigma=self.canny)
-                # plt.subplot(111), plt.imshow(edges, cmap='gray'), plt.title('Canny edge detection'), plt.show()
-                vert = ImageProcessing.verticalLine(edges, L=60, H=120)
-                # plt.subplot(111), plt.imshow(vert, cmap='gray'), plt.title('Vertical line detection'), plt.show()
-                LL = []
-                for c in range(S):
-                    # t1 = time.time()
-                    line_length, END = ImageProcessing.block(vert, c)
-                    # print(time.time()-t1)
-                    LL.append(line_length)
-                    above = min(c, END)
-                    bottom = max(c, END)
-                    seq = list(range(above, bottom + 1, 1))
+                with np.errstate(divide='ignore', invalid='ignore'):
+                    test_column = []
+                    end_points = []
+                    start_points = []
+                    updown = []  # up = 1, down = 2
+                    adj = ImageProcessing.imBrightness3D(img, In=([0.0, 0.0, 0.0], [1.0, b, b]),
+                                                         Out=([0.0, 0.0, 0.0], [1.0, 1.0, 1.0]))
+                    # plt.subplot(111), plt.imshow(adj), plt.title('Brightened'), plt.show()
+                    bfilt = int(self.bfilter) # modified 21 10 23
+                    kernel = np.ones((bfilt, bfilt)) / (bfilt*bfilt) # modified 21 10 23
+                    blur = cv.filter2D(adj, -1, kernel)
+                    blur = np.clip(blur, a_min=0, a_max=1)
+                    # plt.subplot(111), plt.imshow(blur), plt.title('Blurry'), plt.show()
 
-                    if line_length > self.minH and sum(vert[seq, c]) != 0:
-                        test_column.append(c)
-                        end_points.append(END)
-                        start_points.append(c)
-                        if END > c:
-                            updown.append(2)
-                        else:
-                            updown.append(1)
+                    gray = cv.cvtColor(np.float32(blur), cv.COLOR_RGB2GRAY)
+                    # gray = np.uint8(gray*255)
+                    # edges = ImageProcessing.Canny(gray, threshold = 0.3)
 
-                Pair = []
-                MIN_vec = []
-                MAX_vec = []
-                for ud in [1, 2]:
-                    testmat = np.zeros((S, S), dtype=np.uint8)
-                    udidx = [i for i in range(len(updown)) if updown[i] == ud]
-                    for c in udidx:
-                        st = test_column[c]
-                        en = end_points[c]
-                        if ud == 1:
-                            en_temp = st
-                            st = en
-                            en = en_temp
-                        testmat[st:en, test_column[c]] = 1
-                    # line refinement
-                    for r in range(S):
-                        vec = testmat[r, :]
-                        K1 = vec[1:S] > vec[0:(S - 1)]
-                        K2 = vec[1:S] < vec[0:(S - 1)]
-                        st = [i + 1 for i in range(len(K1)) if K1[i]]
-                        en = [i for i in range(len(K2)) if K2[i]]
-                        if vec[0] == 1:
-                            st.insert(0, 0)
-                        if vec[S - 1] == 1:
-                            en.insert(len(en), S - 1)
+                    edges = feature.canny(gray, sigma=self.canny)
+                    # plt.subplot(111), plt.imshow(edges, cmap='gray'), plt.title('Canny edge detection'), plt.show()
 
-                        nLines = len(st)
+                    vert = ImageProcessing.verticalLine(edges, L=60, H=120)
 
-                        for L in range(nLines):
-                            origLine = edges[r, list(range(st[L], en[L] + 1, 1))]
-                            SUM = sum(origLine)
-                            if SUM > 0:
-                                testmat[r, st[L]:en[L]] = vert[r, st[L]:en[L]]
+                    # plt.subplot(111), plt.imshow(vert, cmap='gray'), plt.title('Vertical line detection'), plt.show()
+                    LL = []
+                    for c in range(S):
+                        # t1 = time.time()
+                        line_length, END = ImageProcessing.block(vert, c)
+                        # print(time.time()-t1)
+                        LL.append(line_length)
+                        above = min(c, END)
+                        bottom = max(c, END)
+                        seq = list(range(above, bottom + 1, 1))
+
+                        if line_length > self.minH and sum(vert[seq, c]) != 0:
+                            test_column.append(c)
+                            end_points.append(END)
+                            start_points.append(c)
+                            if END > c:
+                                updown.append(2)
                             else:
-                                MED = int(np.round(stat.median([st[L] + en[L]]) / 2))
-                                testmat[r, st[L]:en[L]] = 0
-                                testmat[r, MED] = 1
-                    fused_image = np.dstack((edges, testmat, testmat))
+                                updown.append(1)
 
-                    [_, Y] = np.where(testmat == 1)
-                    uniqueCols = list(set(Y))
-                    ps = pd.Series(Y)
-                    counts = ps.value_counts().sort_index()
-                    counts = counts.to_frame(name='length')
-                    start_points_ud = [start_points[i] for i in udidx]
-                    end_points_ud = [end_points[i] for i in udidx]
-                    intersectidx = [i for i in range(len(start_points_ud)) if start_points_ud[i] in uniqueCols]
-                    start_points_ud = [start_points_ud[i] for i in intersectidx]
-                    end_points_ud = [end_points_ud[i] for i in intersectidx]
-
-                    counts['end_points'] = end_points_ud
-
-                    counts = counts[counts['length'] >= 3]
-                    nrow = counts.shape[0]
-                    meanX = []
-                    Continuous = []
-                    isContinue = False
-                    Len = []
-
-                    for c in range(nrow - 1):
-                        Current = counts.index[c]
-                        Next = counts.index[c + 1]
-
-                        if Next - Current == 1 and isContinue:
-                            Continuous.append(Next)
-                            Len.append(counts.iloc[c + 1]['length'])
-                        elif Next - Current == 1 and not isContinue:
-                            Continuous = [Current, Next]
-                            Len = [counts.iloc[c]['length'], counts.iloc[c + 1]['length']]
-                            isContinue = True
-                        elif Next - Current != 1 and not isContinue:
-                            Continuous = [Current]
-                            Len = [counts.iloc[c]['length']]
-                            Len = [a / sum(Len) for a in Len]
-                            isContinue = False
-                            temp = sum([a * b for a, b in zip(Continuous, Len)])
-                            meanX.append(np.round(temp))
-                        else:
-                            Len = [a / sum(Len) for a in Len]
-                            temp = sum([a * b for a, b in zip(Continuous, Len)])
-                            meanX.append(np.round(temp))
-                            Continuous = [Current]
-                            Len = [counts.iloc[c]['length']]
-                            isContinue = False
-                    Len = [a / sum(Len) for a in Len]
-                    temp = sum([a * b for a, b in zip(Continuous, Len)])
-                    meanX.append(np.round(temp))
-
-                    X = list(set(meanX))
-                    X.sort()
-                    Xsize = len(X)
-
-                    for c in range(Xsize - 1):
-                        n = int(X[c])
-                        m = int(X[c + 1])
-                        st1 = np.where(testmat[:, n] == 1)[0]
-                        en1 = st1.max()
-                        st1 = st1.min()
-                        st2 = np.where(testmat[:, m] == 1)[0]
-                        en2 = st2.max()
-                        st2 = st2.min()
-                        '''
-                        max_width_dist1.append(abs(m - n))
-                        if c == 0:
-                            max_width_dist2.append(abs(m - n))
-                        else:
-                            l = int(X[c - 1])
-                            minw = min(abs(m - n), abs(n - l))
-                            if max_width_dist2[-1] == minw:
-                                continue
-                            else:
-                                max_width_dist2.append(minw)
-                        '''
-                        if abs(m - n) > 1 and abs(m - n) <= self.maxW:
-                            Pair.append((n, m))
-                            [a1, _] = np.where(testmat[:, range(max(0, n - 1), min(n + 2, S), 1)] == 1)
-                            MIN1 = a1.min()
-                            MAX1 = a1.max()
-                            [a2, _] = np.where(testmat[:, range(max(0, m - 1), min(m + 2, S), 1)] == 1)
-                            MIN2 = a2.min()
-                            MAX2 = a2.max()
-
-                            MIN = min(MIN1, MIN2)
-                            MAX = max(MAX1, MAX2)
-
+                    Pair = []
+                    MIN_vec = []
+                    MAX_vec = []
+                    for ud in [1, 2]:
+                        testmat = np.zeros((S, S), dtype=np.uint8)
+                        udidx = [i for i in range(len(updown)) if updown[i] == ud]
+                        for c in udidx:
+                            st = test_column[c]
+                            en = end_points[c]
                             if ud == 1:
-                                MAX = X[c + 1]
+                                en_temp = st
+                                st = en
+                                en = en_temp
+                            testmat[st:en, test_column[c]] = 1
+                        # line refinement
+                        for r in range(S):
+                            vec = testmat[r, :]
+                            K1 = vec[1:S] > vec[0:(S - 1)]
+                            K2 = vec[1:S] < vec[0:(S - 1)]
+                            st = [i + 1 for i in range(len(K1)) if K1[i]]
+                            en = [i for i in range(len(K2)) if K2[i]]
+                            if vec[0] == 1:
+                                st.insert(0, 0)
+                            if vec[S - 1] == 1:
+                                en.insert(len(en), S - 1)
+
+                            nLines = len(st)
+
+                            for L in range(nLines):
+                                origLine = edges[r, list(range(st[L], en[L] + 1, 1))]
+                                SUM = sum(origLine)
+                                if SUM > 0:
+                                    testmat[r, st[L]:en[L]] = vert[r, st[L]:en[L]]
+                                else:
+                                    MED = int(np.round(stat.median([st[L] + en[L]]) / 2))
+                                    testmat[r, st[L]:en[L]] = 0
+                                    testmat[r, MED] = 1
+                        fused_image = np.dstack((edges, testmat, testmat))
+
+                        [_, Y] = np.where(testmat == 1)
+                        uniqueCols = list(set(Y))
+                        ps = pd.Series(Y)
+                        counts = ps.value_counts().sort_index()
+                        counts = counts.to_frame(name='length')
+                        start_points_ud = [start_points[i] for i in udidx]
+                        end_points_ud = [end_points[i] for i in udidx]
+                        intersectidx = [i for i in range(len(start_points_ud)) if start_points_ud[i] in uniqueCols]
+                        start_points_ud = [start_points_ud[i] for i in intersectidx]
+                        end_points_ud = [end_points_ud[i] for i in intersectidx]
+
+                        counts['end_points'] = end_points_ud
+
+                        counts = counts[counts['length'] >= 3]
+                        nrow = counts.shape[0]
+                        meanX = []
+                        Continuous = []
+                        isContinue = False
+                        Len = []
+
+                        for c in range(nrow - 1):
+                            Current = counts.index[c]
+                            Next = counts.index[c + 1]
+
+                            if Next - Current == 1 and isContinue:
+                                Continuous.append(Next)
+                                Len.append(counts.iloc[c + 1]['length'])
+                            elif Next - Current == 1 and not isContinue:
+                                Continuous = [Current, Next]
+                                Len = [counts.iloc[c]['length'], counts.iloc[c + 1]['length']]
+                                isContinue = True
+                            elif Next - Current != 1 and not isContinue:
+                                Continuous = [Current]
+                                Len = [counts.iloc[c]['length']]
+                                Len = [a / sum(Len) for a in Len]
+                                isContinue = False
+                                temp = sum([a * b for a, b in zip(Continuous, Len)])
+                                meanX.append(np.round(temp))
                             else:
-                                MIN = X[c]
-                            MIN_vec.append(MIN)
-                            MAX_vec.append(MAX)
-                PairSize = len(Pair)
+                                Len = [a / sum(Len) for a in Len]
+                                temp = sum([a * b for a, b in zip(Continuous, Len)])
+                                meanX.append(np.round(temp))
+                                Continuous = [Current]
+                                Len = [counts.iloc[c]['length']]
+                                isContinue = False
+                        Len = [a / sum(Len) for a in Len]
+                        temp = sum([a * b for a, b in zip(Continuous, Len)])
+                        meanX.append(np.round(temp))
 
-                for c in range(PairSize):
-                    x = Pair[c][0]
-                    y = int(MIN_vec[c])
-                    w = int(Pair[c][1] - Pair[c][0] + 1)
-                    h = int(MAX_vec[c] - MIN_vec[c] + 1)
+                        X = list(set(meanX))
+                        X.sort()
+                        Xsize = len(X)
 
-                    res_chr.append(chr)
-                    res_pos1.append(start_array[x])
-                    res_pos2.append(end_array[x + w - 1])
-                    res_pos3.append(start_array[y])
-                    res_pos4.append(end_array[y + h - 1])
-                    res_length.append(end_array[y + h - 1] - start_array[y] + 1)
-                    res_width.append(end_array[x + w - 1] - start_array[x] + 1)
-                    res_total.append(submat[y:(y + h), x:(x + w)].sum())
-                    res_Mean.append(submat[y:(y + h), x:(x + w)].sum() / h / w)
-                    res_maxpixel.append(str(mp * 100) + '%')
-                    res_num.append(num)
-                    res_start.append(start)
-                    res_end.append(end)
-                    res_x.append(x)
-                    res_y.append(y)
-                    res_h.append(h)
-                    res_w.append(w)
-                    res_medpixel.append(medpixel)
+                        for c in range(Xsize - 1):
+                            n = int(X[c])
+                            m = int(X[c + 1])
+                            st1 = np.where(testmat[:, n] == 1)[0]
+                            en1 = st1.max()
+                            st1 = st1.min()
+                            st2 = np.where(testmat[:, m] == 1)[0]
+                            en2 = st2.max()
+                            st2 = st2.min()
+                            '''
+                            max_width_dist1.append(abs(m - n))
+                            if c == 0:
+                                max_width_dist2.append(abs(m - n))
+                            else:
+                                l = int(X[c - 1])
+                                minw = min(abs(m - n), abs(n - l))
+                                if max_width_dist2[-1] == minw:
+                                    continue
+                                else:
+                                    max_width_dist2.append(minw)
+                            '''
+                            if abs(m - n) > 1 and abs(m - n) <= self.maxW:
+                                if abs(m - n) > 4:
+                                    Pair.append((n, m - 2))
+                                else:
+                                    Pair.append((n , m))
+                                [a1, _] = np.where(testmat[:, range(max(0, n - 1), min(n + 2, S), 1)] == 1)
+                                MIN1 = a1.min()
+                                MAX1 = a1.max()
+                                [a2, _] = np.where(testmat[:, range(max(0, m - 1), min(m + 2, S), 1)] == 1)
+                                MIN2 = a2.min()
+                                MAX2 = a2.max()
+
+                                MIN = min(MIN1, MIN2)
+                                MAX = max(MAX1, MAX2)
+
+                                if ud == 1:
+                                    if abs(m - n) > 4:
+                                        MAX = m - 2 # X[c + 1]
+                                    else:
+                                        MAX = m
+                                else:
+                                    MIN = X[c]
+                                MIN_vec.append(MIN)
+                                MAX_vec.append(MAX)
+                    PairSize = len(Pair)
+
+                    for c in range(PairSize):
+                        x = Pair[c][0]
+                        y = int(MIN_vec[c])
+                        w = int(Pair[c][1] - Pair[c][0] + 1)
+                        h = int(MAX_vec[c] - MIN_vec[c] + 1)
+
+                        res_chr.append(chr)
+                        res_pos1.append(start_array[x])
+                        res_pos2.append(end_array[x + w - 1])
+                        res_pos3.append(start_array[y])
+                        res_pos4.append(end_array[y + h - 1])
+                        res_length.append(end_array[y + h - 1] - start_array[y] + 1)
+                        res_width.append(end_array[x + w - 1] - start_array[x] + 1)
+                        res_total.append(submat[y:(y + h), x:(x + w)].sum())
+                        res_Mean.append(submat[y:(y + h), x:(x + w)].sum() / h / w)
+                        res_maxpixel.append(str(mp * 100) + '%')
+                        res_num.append(num)
+                        res_start.append(start)
+                        res_end.append(end)
+                        res_x.append(x)
+                        res_y.append(y)
+                        res_h.append(h)
+                        res_w.append(w)
+                        res_medpixel.append(medpixel)
 
             result = pd.DataFrame(
                 {'chr': res_chr, 'pos1': res_pos1, 'pos2': res_pos2, 'chr2': res_chr, 'pos3': res_pos3, 'pos4': res_pos4,
@@ -1178,7 +1142,7 @@ class getStripe:
 
                     if s_x > 0.2 and s_y > 0.2:
                         if by == 'size':
-                            if list_h[ii] * list_w[ii] <= list_h[jj] * list_w[jj]:
+                            if list_h[ii] / list_w[ii] <= list_h[jj] / list_w[jj]: # 2021.06.23 modified
                                 delidx.append(ii)
                             else:
                                 delidx.append(jj)

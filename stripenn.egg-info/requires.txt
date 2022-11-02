@@ -1,11 +1,11 @@
 cooler
-pandas
-numpy
+joblib
 matplotlib
+numpy
 opencv-python
+pandas
+pathlib
 scikit-image
 scipy
-joblib
 tqdm
 typer
-pathlib

@@ -13,18 +13,19 @@ def execute(
     out: str = typer.Option(..., "--out", "-o", help="Path to output directory"),
     norm: str = typer.Option('KR',"--norm",help="Normalization method. It should be one of the column name of Cooler.bin(). Check it with Cooler.bins().columns (e.g., KR, VC, VC_SQRT)"),
     chrom: str = typer.Option('all', "--chrom", "-k", help="Set of chromosomes. e.g., 'chr1,chr2,chr3', 'all' will generate stripes from all chromosomes"),
-    canny: float = typer.Option(2.5, "--canny", "-c", help="Canny edge detection parameter."),
+    canny: float = typer.Option(2.0, "--canny", "-c", help="Canny edge detection parameter."),
     minL: int = typer.Option(10,'--minL','-l', help="Minimum length of stripe."),
     maxW: int = typer.Option(8, '--maxW','-w', help="Maximum width of stripe."),
     maxpixel: str = typer.Option('0.95,0.96,0.97,0.98,0.99','--maxpixel','-m', help="Percentiles of the contact frequency data to saturate the image. Separated by comma"),
     numcores: int = typer.Option(multiprocessing.cpu_count(), '--numcores','-n', help='The number of cores will be used.'),
     pvalue: float = typer.Option(0.1,  '--pvalue','-p', help='P-value cutoff for stripe.'),
     mask: str = typer.Option('0', "--mask", help='Column coordinates to be masked. e.g., chr9:12345678-12345789'),
-    slow: bool= typer.Option(False,"-s", help='Use if system memory is low.')
+    slow: bool= typer.Option(False,"-s", help='Use if system memory is low.'),
+    bfilter: int=typer.Option(3,"--bfilter",'-b',help="Mean filter size. should be an odd number")
 ):
     """Finds stripe coordinates from 3D genomic data
     """
-    stripenn.compute(cool, out, norm, chrom, canny, minL, maxW, maxpixel, numcores, pvalue, mask, slow)
+    stripenn.compute(cool, out, norm, chrom, canny, minL, maxW, maxpixel, numcores, pvalue, mask, slow, bfilter)
 
 @app.command('seeimage')
 def seeimag(
@@ -34,6 +35,7 @@ def seeimag(
         out: str = typer.Option('./heatmap.png', "--out", "-o", help="Path to output directory"),
         norm: str = typer.Option('KR',"--norm",help="Normalization method. It should be one of the column name of Cooler.bin(). Check it with Cooler.bins().columns (e.g., KR, VC, VC_SQRT)"),
         slow: bool= typer.Option(False,'-s' , help='Use if system memory is low.')
+        
 ):
     """ Draws heatmap image of given position and color saturation parameter (maxpixel).
     """
