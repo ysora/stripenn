@@ -136,7 +136,9 @@ def compute(cool, out, norm, chrom, canny, minL, maxW, maxpixel, numcores, pvalu
     for i in range(len(maxpixel)):
         perc = maxpixel[i]
         result = obj.extract(MP, i, perc, bgleft_up, bgright_up, bgleft_down, bgright_down)
-        result_table = result_table.append(result)
+        #new_row = pd.DataFrame(result)
+        result_table = pd.concat([result_table, result]) 
+        #result_table = result_table.append(result)
 #    for mp in maxpixel:
 #        result = obj.extract(mp, bgleft, bgright)
 #        result_table = result_table.append(result)

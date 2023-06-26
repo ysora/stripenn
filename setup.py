@@ -7,7 +7,7 @@ README = (HERE / "README.rst").read_text()
 
 setup(
     name = 'stripenn',
-    version = '1.1.65.15',
+    version = '1.1.65.18',
     author = 'Sora Yoon',
     author_email = 'sora.yoon@pennmedicine.upenn.edu',
     description = "Image-processing based detection of architectural stripes from chromatic conformation data",

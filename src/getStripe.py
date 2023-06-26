@@ -845,7 +845,9 @@ class getStripe:
                     if type(results[n]) == int:
                         pass
                     else:
-                        result = result.append(results[n])
+            
+                        result=pd.concat([result, results[n]]) 
+                        #result = result.append(results[n])
 
             res = self.RemoveRedundant(result, 'size')
             res = res.reset_index(drop=True)
