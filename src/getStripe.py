@@ -16,7 +16,7 @@ from joblib import Parallel, delayed
 from tqdm import tqdm
 
 class getStripe:
-    def __init__(self, unbalLib, resol, minH, maxW, canny, all_chromnames, chromnames, all_chromsizes, chromsizes, core, bfilter):
+    def __init__(self, unbalLib, resol, minH, maxW, canny, all_chromnames, chromnames, all_chromsizes, chromsizes, core, bfilter, seed):
         self.unbalLib = unbalLib
         self.resol = resol
         self.minH = minH
@@ -28,6 +28,7 @@ class getStripe:
         self.chromsizes = chromsizes
         self.core = core
         self.bfilter = bfilter
+        self.prng = random.Random(seed)
         self.chromnames2sizes={}
         for i in range(len(self.all_chromnames)):
             self.chromnames2sizes[self.all_chromnames[i]] = self.all_chromsizes[i]
@@ -337,7 +338,7 @@ class getStripe:
                         if len(pool) == 0:
                             del mat
                         elif len(pool) < sss:
-                            randval = random.choices(pool, k=len(pool))
+                            randval = self.prng.choices(pool, k=len(pool))
                             tableft_up = np.zeros((400, len(pool)))
                             tabcenter_up = np.zeros((400, len(pool)))
                             tabright_up = np.zeros((400, len(pool)))
@@ -379,7 +380,7 @@ class getStripe:
 
                             del mat
                         else:
-                            randval = random.choices(pool, k=sss)
+                            randval = self.prng.choices(pool, k=sss)
                             tableft_up = np.zeros((400, sss))
                             tabcenter_up = np.zeros((400, sss))
                             tabright_up = np.zeros((400, sss))
@@ -437,7 +438,7 @@ class getStripe:
                         zeroindex = np.where(matsum == 0)
                         pool = [x for x in list(range(nrow)) if x not in zeroindex[0].tolist()]
                         pool = [x for x in pool if x > 20 and x < (unitsize - 20)]
-                        randval = random.choices(pool, k=depl)
+                        randval = self.prng.choices(pool, k=depl)
                         tableft_up = np.zeros((400, depl))
                         tabcenter_up = np.zeros((400, depl))
                         tabright_up = np.zeros((400, depl))
