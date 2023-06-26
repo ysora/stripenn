@@ -1,16 +1,11 @@
-import argparse
 import cooler
-import os
-import pandas as pd
 import numpy as np
-import warnings
-import time
 import sys
 import cv2 as cv
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-from src import getStripe
+from stripenn import getStripe
 
 '''
 def argumentParser():
@@ -72,7 +67,7 @@ def seeimage(cool, position, maxpixel, norm, out, slow):
 
     unbalLib = Lib.matrix(balance=norm)
     resol = Lib._info['bin-size']
-    obj = getStripe.getStripe(unbalLib, resol, 10, 8, 2.5, all_chromnames, chromnames, all_chromsizes, chromsizes,2,3)
+    obj = getStripe.getStripe(unbalLib, resol, 10, 8, 2.5, all_chromnames, chromnames, all_chromsizes, chromsizes, 2, 3)
     if slow:
         print("#####...Slowly estimating Maximum pixel values...#####")
         MP = obj.getQuantile_slow(Lib, [chr], maxpixel)

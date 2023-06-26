@@ -1,7 +1,5 @@
-import argparse
 import cooler
-import multiprocessing
-from src import getStripe
+from stripenn import getStripe
 import os
 import shutil
 import errno
@@ -119,13 +117,13 @@ def compute(cool, out, norm, chrom, canny, minL, maxW, maxpixel, numcores, pvalu
 
     unbalLib = Lib.matrix(balance=norm)
     resol = Lib.binsize
-    obj = getStripe.getStripe(unbalLib, resol, minH, maxW, canny, all_chromnames, chromnames, all_chromsizes, chromsizes,core, bfilter)
+    obj = getStripe.getStripe(unbalLib, resol, minH, maxW, canny, all_chromnames, chromnames, all_chromsizes, chromsizes, core, bfilter)
     print('1. Maximum pixel value calculation ...')
     if slow:
         print("1.1 Slowly estimating Maximum pixel values...")
-        MP = getStripe.getStripe.getQuantile_slow(obj,Lib,chromnames,maxpixel)
+        MP = getStripe.getStripe.getQuantile_slow(obj, Lib, chromnames, maxpixel)
     else:
-        MP = getStripe.getStripe.getQuantile_original(obj,Lib,chromnames,maxpixel)
+        MP = getStripe.getStripe.getQuantile_original(obj, Lib, chromnames, maxpixel)
     print('2. Expected value calculation ...')
     EV = getStripe.getStripe.mpmean(obj)
     print('3. Background distribution estimation ...')
@@ -141,7 +139,7 @@ def compute(cool, out, norm, chrom, canny, minL, maxW, maxpixel, numcores, pvalu
 #        result = obj.extract(mp, bgleft, bgright)
 #        result_table = result_table.append(result)
 
-    result_table = getStripe.getStripe.RemoveRedundant(obj,df=result_table,by='pvalue')
+    result_table = getStripe.getStripe.RemoveRedundant(obj, df=result_table, by='pvalue')
 
     print('5. Stripiness calculation ...')
     s = obj.scoringstripes(result_table, EV, mask)

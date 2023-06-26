@@ -1,15 +1,47 @@
-[tool.poetry]
-name = "stripenn"
-version = "0.1.0"
-description = ""
-authors = ["ysora <ysora90@gmail.com>"]
-
-[tool.poetry.dependencies]
-python = "^3.7"
-
-[tool.poetry.dev-dependencies]
-pytest = "^5.2"
+# Copyright (C) 2022 Roberto Rossini <roberros@uio.no>
+# SPDX-License-Identifier: MIT
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["setuptools>=45", "setuptools-scm>=7.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+
+name = "stripenn"
+version = "1.1.65.18"
+description = "Image-processing based detection of architectural stripes from chromatic conformation data"
+authors = [
+    { name = "Sora Yoon", email = "sora.yoon@pennmedicine.upenn.edu" },
+]
+readme = "README.rst"
+requires-python = ">=3.7"
+license = { text = "MIT License" }
+classifiers = [
+    "Intended Audience :: Information Technology",
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: English",
+    "Operating System :: Independent",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+
+dependencies = [
+    "cooler",
+    "joblib",
+    "numpy",
+    "matplotlib",
+    "opencv-python",
+    "pandas",
+    "scikit-image",
+    "scipy",
+    "tqdm",
+    "typer"]
+
+[project.optional-dependencies]
+test = ["pytest>=5.2"]
+
+[project.scripts]
+stripenn = "cli:main"

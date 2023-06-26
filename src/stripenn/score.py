@@ -1,7 +1,8 @@
 import pandas as pd
 import cooler
 import numpy as np
-from src import getStripe
+from stripenn import getStripe
+
 
 def getScore(cool, coordinates,norm,numcores,out,mask='0'):
     # Just open without header
@@ -45,12 +46,12 @@ def getScore(cool, coordinates,norm,numcores,out,mask='0'):
     chromsizes = all_chromsizes
     unbalLib = Lib.matrix(balance=norm)
     resol = Lib._info['bin-size']
-    obj = getStripe.getStripe(unbalLib, resol, 10, 8, 2.5, all_chromnames, chromnames, all_chromsizes, chromsizes,core,1)
+    obj = getStripe.getStripe(unbalLib, resol, 10, 8, 2.5, all_chromnames, chromnames, all_chromsizes, chromsizes, core, 1)
     EV = getStripe.getStripe.mpmean(obj)
     bgleft_up, bgright_up, bgleft_down, bgright_down = getStripe.getStripe.nulldist(obj)
     pval = getStripe.getStripe.pvalue(obj, bgleft_up, bgright_up, bgleft_down, bgright_down, table)
     table.insert(table.shape[1],'pvalue_added',pval,True)
-    MEAN, SUM = getStripe.getStripe.getMean(obj,table)
+    MEAN, SUM = getStripe.getStripe.getMean(obj, table)
     s,MEANOE,TOTALOE = obj.scoringstripes(table, EV, mask)
     table.insert(table.shape[1],'Stripiness_added',s,True)
     table.insert(table.shape[1], "O_Mean_added", MEAN, True)
