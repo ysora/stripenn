@@ -21,11 +21,12 @@ def execute(
     pvalue: float = typer.Option(0.1,  '--pvalue','-p', help='P-value cutoff for stripe.'),
     mask: str = typer.Option('0', "--mask", help='Column coordinates to be masked. e.g., chr9:12345678-12345789'),
     slow: bool= typer.Option(False,"-s", help='Use if system memory is low.'),
-    bfilter: int=typer.Option(3,"--bfilter",'-b',help="Mean filter size. should be an odd number")
+    bfilter: int=typer.Option(3,"--bfilter",'-b',help="Mean filter size. should be an odd number"),
+    seed: int=typer.Option(123456789, "--seed", help="Seed used to initialize the PRNG.")
 ):
     """Finds stripe coordinates from 3D genomic data
     """
-    stripenn.compute(cool, out, norm, chrom, canny, minL, maxW, maxpixel, numcores, pvalue, mask, slow, bfilter)
+    stripenn.compute(cool, out, norm, chrom, canny, minL, maxW, maxpixel, numcores, pvalue, mask, slow, bfilter, seed)
 
 @app.command('seeimage')
 def seeimag(
@@ -35,7 +36,7 @@ def seeimag(
         out: str = typer.Option('./heatmap.png', "--out", "-o", help="Path to output directory"),
         norm: str = typer.Option('KR',"--norm",help="Normalization method. It should be one of the column name of Cooler.bin(). Check it with Cooler.bins().columns (e.g., KR, VC, VC_SQRT)"),
         slow: bool= typer.Option(False,'-s' , help='Use if system memory is low.')
-        
+
 ):
     """ Draws heatmap image of given position and color saturation parameter (maxpixel).
     """
