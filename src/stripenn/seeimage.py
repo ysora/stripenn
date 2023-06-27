@@ -1,13 +1,11 @@
-import argparse
 import cooler
-import os
-import pandas as pd
 import numpy as np
-import warnings
-import time
 import sys
 import cv2 as cv
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+from stripenn import getStripe
 
 '''
 def argumentParser():
@@ -31,9 +29,12 @@ def argumentParser():
     return(cool, position, maxpixel, norm, out)
 '''
 
-def seeimage(cool, position, maxpixel, norm, out):
+def seeimage(cool, position, maxpixel, norm, out, slow):
     #cool, position, maxpixel, norm, out = argumentParser()
     Lib = cooler.Cooler(cool)
+
+    maxpixel = maxpixel.split(',')
+    maxpixel = list(map(float, maxpixel))
 
     PossibleNorm = Lib.bins().columns
     if norm == 'None':
@@ -50,28 +51,47 @@ def seeimage(cool, position, maxpixel, norm, out):
     all_chromnames = Lib.chromnames
     chr = position.split(':')
     chr = chr[0]
+
     if chr not in all_chromnames:
         sys.exit("Invalid chromosome name.")
-    cfm = unbalLib.fetch(chr)
-    M = np.quantile(a=cfm[cfm > 0], q=maxpixel, interpolation='linear')
-    del cfm
+
+    all_chromnames = Lib.chromnames
+    all_chromsizes = Lib.chromsizes
+    chrom_remain_idx = np.where(all_chromsizes > 500000)[0]
+    all_chromnames = [all_chromnames[i] for i in chrom_remain_idx]
+    all_chromsizes = all_chromsizes[chrom_remain_idx]
+    chromnames = [chr]
+    chromsizes = all_chromsizes[chr]
+    if len(all_chromnames) == 0:
+        sys.exit("Exit: All chromosomes are shorter than 50kb.")
+
+    unbalLib = Lib.matrix(balance=norm)
+    resol = Lib._info['bin-size']
+    obj = getStripe.getStripe(unbalLib, resol, 10, 8, 2.5, all_chromnames, chromnames, all_chromsizes, chromsizes, 2, 3)
+    if slow:
+        print("#####...Slowly estimating Maximum pixel values...#####")
+        MP = obj.getQuantile_slow(Lib, [chr], maxpixel)
+    else:
+        MP = obj.getQuantile_original(Lib, [chr], maxpixel)
 
     A = unbalLib.fetch(position,position)
 
     framesize = A.shape[0]
-    red = np.ones((framesize, framesize)) * 255
-    blue = 255 * (M - A) / M
-    blue[np.where(blue < 0)] = 0
-    green = blue
 
-    img = cv.merge((red / 255, green / 255, blue / 255))
-    img = np.clip(img, a_min=0, a_max=1)
+    for i in range(len(maxpixel)):
+        perc = str(maxpixel[i])
+        M = MP[chr][i]
+        red = np.ones((framesize, framesize)) * 255
+        blue = 255 * (M - A) / M
+        blue[np.where(blue < 0)] = 0
+        green = blue
 
+        img = cv.merge((red / 255, green / 255, blue / 255))
+        img = np.clip(img, a_min=0, a_max=1)
 
-    fig = plt.subplot(111)
-    plt.imshow(img)
-    plt.title(position)
-    plt.show()
-    fig.figure.savefig(out)
+        fig = plt.subplot(111)
+        plt.imshow(img)
+        plt.title(position)
+        fig.figure.savefig(out + "_" + position + "_" + perc + "qt" + '.png')
 
     return 0

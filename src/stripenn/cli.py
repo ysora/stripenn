@@ -1,8 +1,6 @@
 import typer
-from src import stripenn
-from src import getStripe
-from src import seeimage
-from src import score
+from stripenn import stripenn
+from stripenn import score, seeimage
 import multiprocessing
 
 app = typer.Typer()
@@ -54,7 +52,7 @@ def scoring(
 ):
     """ Calculates p-value and stripiness of given stripes based on given 3D genome conformation data.
     """
-    score.getScore(cool, coordinates,norm,numcores,out,mask)
+    score.getScore(cool, coordinates, norm, numcores, out, mask)
 
 
 def main():
