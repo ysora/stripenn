@@ -1,4 +1,4 @@
-# Copyright (C) 2022 Roberto Rossini <roberros@uio.no>
+# Copyright (C) 2023 Roberto Rossini <roberros@uio.no>
 # SPDX-License-Identifier: MIT
 
 [build-system]
@@ -44,7 +44,7 @@ dependencies = [
 test = ["pytest>=5.2"]
 
 [tool.setuptools]
-package-dir = {"" = "src/stripenn"}
+package-dir = {"stripenn" = "src/stripenn"}
 
 [project.scripts]
-stripenn = "cli:main"
+stripenn = "stripenn.cli:main"
