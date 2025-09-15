@@ -1,0 +1,10 @@
+cool: /mnt/data0/sora/stripe/hic/NOD.merged.allValidPairs.mcool::resolutions/5000
+out: /mnt/data0/sora/stripe/stripenn_out/NOD_5kb_VCSQRT3/
+norm: VC_SQRT
+chrom: 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,X
+canny: 2.5
+minL: 10
+maxW: 16
+maxpixel: 0.95,0.96,0.97,0.98,0.99
+num_cores: 8
+pvalue: 0.1
