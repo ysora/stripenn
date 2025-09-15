@@ -1,32 +1,20 @@
-# Copyright (C) 2022 Roberto Rossini <roberros@uio.no>
+# Copyright (C) 2025 Roberto Rossini <roberros@uio.no>, Sora Yoon <sorayoon@upenn.edu>
 # SPDX-License-Identifier: MIT
 
 [build-system]
-<<<<<<< HEAD
 requires = ["setuptools>=45", "setuptools-scm>=7.0", "wheel", "python>=3.8"]
-=======
-requires = ["setuptools>=45", "setuptools-scm>=7.0", "wheel", "python>=3.7"]
->>>>>>> 33224107de788ce666885bcf1f6f1c8947ed4cfc
 build-backend = "setuptools.build_meta"
 
 [project]
 
 name = "stripenn"
-<<<<<<< HEAD
 version = "1.1.65.22"
-=======
-version = "1.1.65.20"
->>>>>>> 33224107de788ce666885bcf1f6f1c8947ed4cfc
 description = "Image-processing based detection of architectural stripes from chromatin conformation data"
 authors = [
     { name = "Sora Yoon", email = "sora.yoon@pennmedicine.upenn.edu" },
 ]
 readme = "README.rst"
-<<<<<<< HEAD
 requires-python = ">=3.8"
-=======
-requires-python = ">=3.7"
->>>>>>> 33224107de788ce666885bcf1f6f1c8947ed4cfc
 license = { text = "MIT License" }
 classifiers = [
     "Intended Audience :: Information Technology",
@@ -34,10 +22,6 @@ classifiers = [
     "Natural Language :: English",
     "Operating System :: OS Independent",
     "Programming Language :: Python",
-<<<<<<< HEAD
-=======
-    "Programming Language :: Python :: 3.7",
->>>>>>> 33224107de788ce666885bcf1f6f1c8947ed4cfc
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
@@ -69,11 +53,6 @@ pandas = "^1.5.0"
 scikit-image = "*"
 scipy = "*"
 python = ">=3.8"
-=======
-pandas = "*"
-scikit-image = "*"
-scipy = "*"
->>>>>>> 33224107de788ce666885bcf1f6f1c8947ed4cfc
 
 
 [project.optional-dependencies]
@@ -87,10 +66,6 @@ stripenn = "stripenn.cli:main"
 
 [tool.poetry]
 name = "stripenn"
-<<<<<<< HEAD
 version = "1.1.65.22"
-=======
-version = "1.1.65.20"
->>>>>>> 33224107de788ce666885bcf1f6f1c8947ed4cfc
 description = "Image-processing based detection of architectural stripes from chromatin conformation data"
 authors = ["Sora Yoon <sora.yoon@pennmedicine.upenn.edu>"]
