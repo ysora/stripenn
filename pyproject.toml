@@ -48,7 +48,6 @@ numpy = "*"
 matplotlib = "*"
 tqdm = "*"
 opencv-python = "*"
-<<<<<<< HEAD
 pandas = "^1.5.0"
 scikit-image = "*"
 scipy = "*"
