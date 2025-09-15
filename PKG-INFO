@@ -1,0 +1,22 @@
+Metadata-Version: 2.1
+Name: stripenn
+Version: 1.1.65.22
+Summary: Image-processing based detection of architectural stripes from chromatin conformation data
+Author: Sora Yoon
+Author-email: sora.yoon@pennmedicine.upenn.edu
+Requires-Python: >=3.8
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Requires-Dist: cooler
+Requires-Dist: joblib
+Requires-Dist: matplotlib
+Requires-Dist: numpy
+Requires-Dist: opencv-python
+Requires-Dist: pandas (>=1.5.0,<2.0.0)
+Requires-Dist: scikit-image
+Requires-Dist: scipy
+Requires-Dist: tqdm
+Requires-Dist: typer
