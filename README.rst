@@ -40,7 +40,7 @@ Installation
 Open terminal and type following:
 ::
 
-    **pip install stripenn** (Please install it via PyPI, not git clone)
+    pip install stripenn # (Please install it via PyPI, not git clone)
 
 If pip is not installed, install pip first: `pip installation <https://pip.pypa.io/en/stable/installing/>`_
 
