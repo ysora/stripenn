@@ -29,7 +29,7 @@ def argumentParser():
     return(cool, position, maxpixel, norm, out)
 '''
 
-def seeimage(cool, position, maxpixel, norm, out, slow):
+def seeimage(cool, position, maxpixel, norm, out, slow, seed):
     #cool, position, maxpixel, norm, out = argumentParser()
     Lib = cooler.Cooler(cool)
 
@@ -67,7 +67,7 @@ def seeimage(cool, position, maxpixel, norm, out, slow):
 
     unbalLib = Lib.matrix(balance=norm)
     resol = Lib._info['bin-size']
-    obj = getStripe.getStripe(unbalLib, resol, 10, 8, 2.5, all_chromnames, chromnames, all_chromsizes, chromsizes, 2, 3)
+    obj = getStripe.getStripe(unbalLib, resol, 10, 8, 2.5, all_chromnames, chromnames, all_chromsizes, chromsizes, 2, 3, seed)
     if slow:
         print("#####...Slowly estimating Maximum pixel values...#####")
         MP = obj.getQuantile_slow(Lib, [chr], maxpixel)

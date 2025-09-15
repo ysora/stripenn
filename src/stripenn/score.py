@@ -4,7 +4,7 @@ import numpy as np
 from stripenn import getStripe
 
 
-def getScore(cool, coordinates,norm,numcores,out,mask='0'):
+def getScore(cool, coordinates,norm,numcores,seed, out, mask='0'):
     # Just open without header
     bfilter = 1
     print('Run score function')
@@ -46,7 +46,7 @@ def getScore(cool, coordinates,norm,numcores,out,mask='0'):
     chromsizes = all_chromsizes
     unbalLib = Lib.matrix(balance=norm)
     resol = Lib._info['bin-size']
-    obj = getStripe.getStripe(unbalLib, resol, 10, 8, 2.5, all_chromnames, chromnames, all_chromsizes, chromsizes, core, 1)
+    obj = getStripe.getStripe(unbalLib, resol, 10, 8, 2.5, all_chromnames, chromnames, all_chromsizes, chromsizes, core, 1, seed)
     EV = getStripe.getStripe.mpmean(obj)
     bgleft_up, bgright_up, bgleft_down, bgright_down = getStripe.getStripe.nulldist(obj)
     pval = getStripe.getStripe.pvalue(obj, bgleft_up, bgright_up, bgleft_down, bgright_down, table)

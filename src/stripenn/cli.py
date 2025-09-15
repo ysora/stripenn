@@ -33,12 +33,13 @@ def seeimag(
         maxpixel: str = typer.Option('0.95,0.96,0.97,0.98,0.99',"--maxpixel",'-m', help="Quantile for the pixel saturation. (e.g., 0.95)"),
         out: str = typer.Option('./heatmap.png', "--out", "-o", help="Path to output directory"),
         norm: str = typer.Option('KR',"--norm",help="Normalization method. It should be one of the column name of Cooler.bin(). Check it with Cooler.bins().columns (e.g., KR, VC, VC_SQRT)"),
-        slow: bool= typer.Option(False,'-s' , help='Use if system memory is low.')
+        slow: bool= typer.Option(False,'-s' , help='Use if system memory is low.'),
+        seed: int=typer.Option(123456789, "--seed", help="Seed used to initialize the PRNG.")
 
 ):
     """ Draws heatmap image of given position and color saturation parameter (maxpixel).
     """
-    seeimage.seeimage(cool, position, maxpixel, norm, out, slow)
+    seeimage.seeimage(cool, position, maxpixel, norm, out, slow, seed)
     return 0
 
 @app.command('score')
@@ -47,12 +48,14 @@ def scoring(
     coordinates: str = typer.Option(..., "--coord",'-c', help="Path to stripe coordinate table"),
     norm: str = typer.Option('KR',"--norm",help="Normalization method. It should be one of the column name of Cooler.bin(). Check it with Cooler.bins().columns (e.g., KR, VC, VC_SQRT)"),
     numcores: int = typer.Option(multiprocessing.cpu_count(), '-n','--numcores', help='The number of cores will be used.'),
+    seed: int=typer.Option(123456789, "--seed", help="Seed used to initialize the PRNG."),
     out: str = typer.Option('scores.out','--out','-o',help='Path to output file'),
     mask: str = typer.Option('0', "--mask", help='Column coordinates to be masked. e.g., chr9:12345678-12345789')
+    
 ):
     """ Calculates p-value and stripiness of given stripes based on given 3D genome conformation data.
     """
-    score.getScore(cool, coordinates, norm, numcores, out, mask)
+    score.getScore(cool, coordinates, norm, numcores, seed, out, mask)
 
 
 def main():
